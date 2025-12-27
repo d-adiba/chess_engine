@@ -16,6 +16,11 @@ typedef enum  {
 
 } square;
 
+// side to move (colors) 
+typedef enum {
+	white , black
+} side; 
+
 /* get_bit(bitboard, sq)
    Rôle : retourne l’état (0/1) du bit correspondant à la case sq dans bitboard.
 

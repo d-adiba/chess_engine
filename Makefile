@@ -1,4 +1,4 @@
-FILES := $(wildcard *.[ch])
+FILES := $(wildcard *.[c])
 
 
 all:

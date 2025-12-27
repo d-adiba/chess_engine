@@ -9,7 +9,7 @@ void  print_bitboard(U64 bitboard)
 		for (file = 0; file < 8; file++)
 		{ 
 			sq  = rank * 8 + file;
-			printf(" %d ", ((bitboard  >> sq) & 1ULL)); 
+			printf(" %d ", (int)((bitboard  >> sq) & 1ULL)); 
 		}
 		printf("\n");
 	}
