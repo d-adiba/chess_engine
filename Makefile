@@ -1,9 +1,5 @@
-FILES := $(wildcard *.[c])
-
-
+FILES:= $(wildcard *.[c])
 all:
-	gcc -oFast $(FILES)  -o drie
-
+	gcc -oFast $(FILES) -o drie 
 debug:
 	gcc -Wall -Wextra -Werror $(FILES) -o drie
-

@@ -17,7 +17,7 @@
 
      a  b  c  d  e  f  g  h
  */
-extern  const U64 not_a_file ; // 18374403900871474942ULL 
+extern const U64 not_a_file;	// 18374403900871474942ULL 
 
 /*
   8  1  1  1  1  1  1  1  0 
@@ -32,7 +32,7 @@ extern  const U64 not_a_file ; // 18374403900871474942ULL
      a  b  c  d  e  f  g  h
 
  */
-extern const U64 not_h_file; //= 9187201950435737471ULL 
+extern const U64 not_h_file;	//= 9187201950435737471ULL 
 
 /*
   8  0  0  1  1  1  1  1  1 
@@ -47,7 +47,7 @@ extern const U64 not_h_file; //= 9187201950435737471ULL
      a  b  c  d  e  f  g  h
 
 */
-extern const U64 not_ab_file; //= 18229723555195321596ULL
+extern const U64 not_ab_file;	//= 18229723555195321596ULL
 
 
 /*
@@ -63,7 +63,7 @@ extern const U64 not_ab_file; //= 18229723555195321596ULL
      a  b  c  d  e  f  g  h
 
 */
-extern const U64 not_hg_file ; //= 4557430888798830399ULL 
+extern const U64 not_hg_file;	//= 4557430888798830399ULL 
 
 /* Table des attaques de pions pré-calculées.
    pawn_attacks[sd][sq] contient le bitboard des cases attaquées par un pion du côté sd

@@ -1,48 +1,107 @@
-#include "pawn.h" 
+#include "pawn.h"
 
 
-const U64 not_a_file = 18374403900871474942ULL; 
+const U64 not_a_file = 18374403900871474942ULL;
 
-const U64 not_h_file = 9187201950435737471ULL; 
+const U64 not_h_file = 9187201950435737471ULL;
 
-const U64 not_ab_file =  18229723555195321596ULL;
+const U64 not_ab_file = 18229723555195321596ULL;
 
-const U64 not_hg_file = 4557430888798830399ULL; 
+const U64 not_hg_file = 4557430888798830399ULL;
 
-U64 pawn_attacks[2][64];      
+U64 pawn_attacks[2][64];
 
-U64  mask_pawn_attacks (side sd, square sq)
+/**
+ * @brief Calcule les positions d’attaque d’un pion à partir d’une case donnée.
+ *
+ * @context
+ * - Utilisée lors du calcul / pré-calcul de la table d’attaque des pions.
+ *
+ * @inputs
+ * - square : index de la case du pion, dans l’intervalle [0..63].
+ * - color  : couleur du pion (ex. WHITE / BLACK).
+ *
+ * @outputs
+ * - Retourne un U64 (bitboard) dont les bits à 1 représentent les cases attaquées
+ *   par ce pion depuis la case square.
+ * - Si la valeur retournée est 0, alors le pion n’a aucune case attaquable
+ *
+ * @errors / undefined behavior
+ * - Comportement indéfini si square n’est pas dans [0..63] (décalage de bits invalide).
+ *
+ * @algorithm
+ * 1) Principe (bitboards) :
+ *    - Les attaques d’un pion sont obtenues via des décalages de 7 et 9 bits
+ *      (selon la convention d’orientation du bitboard et la couleur).
+ *    - Les deux bitboards (capture gauche / capture droite) sont combinés par OU.
+ *
+ * 2) Gestion des cas limites (débordements de colonnes) :
+ *    - Sans masquage, un pion sur la colonne A ou H peut “wrap” sur l’autre côté
+ *      lors du décalage (effet de débordement horizontal).
+ *    - On masque donc les résultats avec :
+ *      - not_a_file pour éliminer les attaques qui débordent depuis la colonne A,
+ *      - not_h_file pour éliminer les attaques qui débordent depuis la colonne H.
+ *
+ */
+
+U64 mask_pawn_attacks(side sd, square sq)
 {
-	U64 attacks_result = 0ULL; 
-	U64  bitboard = 0ULL;
-	set_bit(&bitboard, sq);
-	print_bitboard(bitboard);
+    U64 attacks_result = 0ULL;
+    U64 bitboard = 0ULL;
+    set_bit(&bitboard, sq);
+    print_bitboard(bitboard);
 
-	// white pawn	
-	if (!sd)
-	{
-		if ((bitboard >> 7) & not_a_file)   attacks_result |= (bitboard >> 7) ;
-		if ((bitboard >> 9) & not_h_file)   attacks_result |= (bitboard >> 9) ;
+    // white pawn   
+    if (!sd) {
+	if ((bitboard >> 7) & not_a_file)
+	    attacks_result |= (bitboard >> 7);
+	if ((bitboard >> 9) & not_h_file)
+	    attacks_result |= (bitboard >> 9);
 
-	}
+    }
+    // black pawn 
+    else {
+	if ((bitboard << 7) & not_h_file)
+	    attacks_result |= (bitboard << 7);
+	if ((bitboard << 9) & not_a_file)
+	    attacks_result |= (bitboard << 9);
 
-	// black pawn 
-	else 
-	{
-		if ((bitboard << 7) & not_h_file)   attacks_result |= (bitboard << 7) ;
-		if ((bitboard << 9) & not_a_file)   attacks_result |= (bitboard << 9) ;
-
-	}
-	return attacks_result;
+    }
+    return attacks_result;
 }
+/**
+ * @brief Calcule la table d'attaque d'un pion independament de sa postion et sa couleur; 
+ *
+ * @outputs
+ * - Retourne une table en deux dimension ou l'indice [couleur][case] 
+ *    donne le U64 équivalent aux postions d'attaque du pion concerné; 
+ *
+ * @errors / undefined behavior
+ * - overflow si la position du  n’est pas dans [0..63] (décalage de bits invalide).
+ *
+ * @algorithm
+ * 1) Principe (bitboards) :
+ *    - Les attaques d’un pion sont obtenues via des décalages de 7 et 9 bits
+ *      (selon la convention d’orientation du bitboard et la couleur).
+ *    - Les deux bitboards (capture gauche / capture droite) sont combinés par OU.
+ *
+ * 2) Gestion des cas limites (débordements de colonnes) :
+ *    - Sans masquage, un pion sur la colonne A ou H peut “wrap” sur l’autre côté
+ *      lors du décalage (effet de débordement horizontal).
+ *    - On masque donc les résultats avec :
+ *      - not_a_file pour éliminer les attaques qui débordent depuis la colonne A,
+ *      - not_h_file pour éliminer les attaques qui débordent depuis la colonne H.
+ *
+ * @notes
+ * - Exemple (à adapter à ta convention) : pour (WHITE, h4), le décalage naïf peut
+ *   produire une case invalide de l’autre côté ; le masque supprime cette case.
+ */
 
 void init_pawn_leaper_attacks()
 {
-	int sq; 
-	for (sq = 0; sq < 64; sq++)
-	{ 
-		pawn_attacks[white][sq] = mask_pawn_attacks(white, sq);
-		pawn_attacks[black][sq] = mask_pawn_attacks(black, sq);
-	}
+    int sq;
+    for (sq = 0; sq < 64; sq++) {
+	pawn_attacks[white][sq] = mask_pawn_attacks(white, sq);
+	pawn_attacks[black][sq] = mask_pawn_attacks(black, sq);
+    }
 }
-
