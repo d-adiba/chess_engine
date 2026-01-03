@@ -113,6 +113,6 @@ U64 mask_knight_attacks(square sq);
 
    Effet :
    - Remplit les tableaux globaux (ex: pawn_attacks, knight_attacks ... etc) avec les masques calculés.*/
-void init_pawn_leaper_attacks(void);
+void init_leaper_attacks(void);
 
 #endif
