@@ -15,6 +15,9 @@ typedef enum {
     a1, b1, c1, d1, e1, f1, g1, h1
 } square;
 
+
+extern const char squares[64][3];
+
 // side to move (colors) 
 typedef enum {
     white, black
@@ -90,5 +93,36 @@ static inline int pop_bit(U64 *bitboard, square sq)
    Effet :
    - Écrit sur stdout via printf(). */
 void print_bitboard(U64 bitborad);
+
+static inline const char *get_square(square sq)
+{
+	return squares[sq];
+}
+/*
+ *Compter le nombre de bit dans un bitboard
+ * */
+static inline  int count_bits( U64 bitboard)
+{
+	int count = 0; 
+	while (bitboard)
+	{
+		count++;
+		// réinitialise le bit le moins significatif  du bitboard 
+		bitboard &= bitboard - 1; 	
+	}
+	return count;
+}
+/*
+ *renvoie l'index du 1er bit le moins significatif 
+ * */
+static inline int get_ls1b_index(U64 bitboard)
+{
+	if(bitboard)
+		return count_bits( (bitboard & -bitboard) -1);
+	return -1;
+}
+
+
+
 
 #endif

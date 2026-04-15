@@ -74,6 +74,49 @@ extern U64 pawn_attacks[2][64];
    Déclarée ici (extern) et définie une seule fois dans attacks.c */
 extern U64 knight_attacks[64];
 
+/* Table des attaques de Roi pré-calculées.
+   king_attacks[sq] contient le bitboard des cases attaquées par le Roi placé case sq
+   Déclarée ici (extern) et définie une seule fois dans attacks.c */
+extern U64 king_attacks[64];
+
+/* Table des attaques de fou pré-calculées.
+   bishop_attacks[sq] contient le bitboard des cases attaquées par le fou  placé case sq
+   Déclarée ici (extern) et définie une seule fois dans attacks.c */
+extern U64 bishop_attacks[64];
+
+
+extern U64 bishop_attacks[64];
+
+
+/*
+ * Tableau recapitulant  le nombre de deplacment selon 
+ * le masque d'attaque par case pour un bihop 
+	6, 5, 5, 5, 5, 5, 5, 6,
+	5, 5, 5, 5, 5, 5, 5, 5,
+	5, 5, 7, 7, 7, 7, 5, 5,
+	5, 5, 7, 9, 9, 7, 5, 5,
+	5, 5, 7, 9, 9, 7, 5, 5,
+	5, 5, 7, 7, 7, 7, 5, 5,
+	5, 5, 5, 5, 5, 5, 5, 5,
+	6, 5, 5, 5, 5, 5, 5, 6 
+*/
+
+extern const int bishop_relevant_bits[64];
+ /*
+ * Tableau recapitulant  le nombre de deplacment selon 
+ * le masque d'attaque par case pour un rook 
+	6, 5, 5, 5, 5, 5, 5, 6,
+ 12, 11, 11, 11, 11, 11, 11, 12,
+ 11, 10, 10, 10, 10, 10, 10, 11,
+ 11, 10, 10, 10, 10, 10, 10, 11,
+ 11, 10, 10, 10, 10, 10, 10, 11,
+ 11, 10, 10, 10, 10, 10, 10, 11,
+ 11, 10, 10, 10, 10, 10, 10, 11,
+ 11, 10, 10, 10, 10, 10, 10, 11,
+ 12, 11, 11, 11, 11, 11, 11, 12
+*/
+extern const int rook_relevant_bits[64]; 
+
 
 /* mask_pawn_attacks(sd, sq)
    Rôle : calcule et renvoie le bitboard des cases attaquées par un pion placé sur sq,
@@ -91,7 +134,6 @@ extern U64 knight_attacks[64];
    - sq doit être dans [0, 63]. */
 U64 mask_pawn_attacks(side sd, square sq);
 
-
 /* mask_knight_attacks(sq)
    Rôle : calcule et renvoie le bitboard des cases attaquées par un cavalier palcé case sq
           Le résultat est un masque d’attaques “brut” (sans tenir compte des pièces sur l’échiquier).
@@ -106,6 +148,37 @@ U64 mask_pawn_attacks(side sd, square sq);
    - sq doit être dans [0, 63]. */
 U64 mask_knight_attacks(square sq);
 
+/* mask_king_attacks(sq)
+   Rôle : calcule et renvoie le bitboard des cases attaquées par un Roi palcé case sq
+          Le résultat est un masque d’attaques “brut” (sans tenir compte des pièces sur l’échiquier).
+
+   Paramètres :
+   - sq : case de départ du Roi 
+
+   Retour :
+   - Un U64 où chaque bit à 1 représente une case attaquée par ce Roi depuis sq.
+   Préconditions :
+   - sq doit être dans [0, 63]. */
+U64 mask_king_attacks(square sq);
+
+/* mask_bishop_attacks(sq)
+   Rôle : calcule et renvoie le bitboard des cases attaquées par un Fou  palcé case sq
+          Le résultat est un masque d’attaques “brut” (sans tenir compte des pièces sur l’échiquier).
+
+   Paramètres :
+   - sq : case de départ du fou 
+
+   Retour :
+   - Un U64 où chaque bit à 1 représente une case attaquée par ce Roi depuis sq.
+   Préconditions :
+   - sq doit être dans [0, 63]. */
+U64 mask_bishop_attacks(square sq);
+
+U64 mask_bishop_attacks_on_the_fly(square sq, U64 block);
+
+U64 mask_rook_attacks(square sq);
+
+U64 mask_rook_attacks_on_the_fly(square sq, U64 block);
 
 /* init_pawn_leaper_attacks()
    Rôle : pré-calcule/initialise les tables d’attaques des différentes pieces
