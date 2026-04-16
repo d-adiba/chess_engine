@@ -1,15 +1,13 @@
 #include "attacks.h"
-
+#include "random.h"
 
 int main()
 {
-	for ( int i = 0 ; i < 8; i++)
-	{
-		for ( int j = 0 ; j < 8; j++)
+		xorshift_init(); 
+		for ( int j = 0 ; j < 4; j++)
 		{
-		 printf(" %d,",count_bits(mask_rook_attacks(i * 8 + j)));
+		 	print_bitboard(get_random_u64());
 		}
        		printf("\n");
-	}	
 	    	return 0;
 }

@@ -105,7 +105,6 @@ extern const int bishop_relevant_bits[64];
  /*
  * Tableau recapitulant  le nombre de deplacment selon 
  * le masque d'attaque par case pour un rook 
-	6, 5, 5, 5, 5, 5, 5, 6,
  12, 11, 11, 11, 11, 11, 11, 12,
  11, 10, 10, 10, 10, 10, 10, 11,
  11, 10, 10, 10, 10, 10, 10, 11,
