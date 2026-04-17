@@ -36,8 +36,8 @@ U64 knight_attacks[64];
 U64 king_attacks[64]; 
 U64 bishop_attacks[64];
 U64 rook_attacks[64];
-
-
+U64 rook_magic_number[64];
+U64 bishop_magic_number[64]; 
 /**
  * @brief Calcule les positions d’attaque d’un pion à partir d’une case donnée.
  *
@@ -375,5 +375,59 @@ U64 set_occupancy( int index , int bits_in_mask, U64 mask_attacks)
 			occupancy |= (1ULL << sq); 
 	}
 	return occupancy;
+}
+
+U64 find_magic_number(square sq, int relevant_bits, flags f)
+{
+	U64 occupancies[4096] , attacks[4096], used_attacks[4096];
+	U64 attack_mask = (f == bishop)  ? mask_bishop_attacks(sq): 
+		mask_rook_attacks(sq);
+	int occupancy_indicies, index; 
+        occupancy_indicies =  1 << relevant_bits;
+ 	for (index = 0; index < occupancy_indicies; index++)
+	{
+		occupancies[index] = set_occupancy(index, relevant_bits, attack_mask);
+		attacks [index] = ( f == bishop) ? mask_bishop_attacks_on_the_fly(sq,
+				occupancies[index]) : mask_rook_attacks_on_the_fly (sq,
+					occupancies[index]);
+	}
+	int magic_index, fail, index_t; 
+	U64  magic_number;
+	for( int i = 0;  i < 100000000; i++) 
+	{
+		magic_number = get_magic_number();
+		if ( count_bits(((attack_mask * magic_number) & 
+				0xFF00000000000000)) < 6 ) continue; 
+		memset(used_attacks, 0ULL, sizeof(used_attacks));
+		fail = 0; 
+		for (index_t = 0; !fail && 
+				index_t < occupancy_indicies; index_t++)
+		{
+			magic_index =  (int)  ((occupancies[index_t] * magic_number) >> ( 64 - relevant_bits)); 
+		       if (used_attacks[magic_index] == 0ULL)
+				used_attacks[magic_index] = attacks[index_t];
+			else if (used_attacks[magic_index] != attacks[index_t])
+				 fail = 1;
+		}
+		if (!fail)
+			return magic_number;
+	}
+	printf("Magic number not working");
+	return 0ULL; 	
+}
+
+void init_magic_number()
+{
+	for ( int i = 0; i < 64; i++)
+	{
+		rook_magic_number[i] =  find_magic_number (i, rook_relevant_bits[i], rook);
+		printf(" 0x%llxULL,\n", rook_magic_number[i]); 
+	}
+	printf ("\n++++++++++++bishop+++++++++++\n");
+	for ( int i = 0; i < 64; i++)
+	{
+		bishop_magic_number[i] = find_magic_number(i, bishop_relevant_bits[i],bishop); 
+		printf(" 0x%llxULL,\n", bishop_magic_number[i]);
+	}
 }
 

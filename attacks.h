@@ -2,6 +2,13 @@
 #define ATTACKS
 
 #include "bitboard.h"
+#include "random.h"
+#include <string.h>
+#include <stdio.h>
+
+typedef enum {
+	bishop, rook
+} flags;
 
 /* 
   8  0  1  1  1  1  1  1  1 
@@ -114,9 +121,9 @@ extern const int bishop_relevant_bits[64];
  11, 10, 10, 10, 10, 10, 10, 11,
  12, 11, 11, 11, 11, 11, 11, 12
 */
-extern const int rook_relevant_bits[64]; 
-
-
+extern const int rook_relevant_bits[64];
+extern U64 rook_magic_number[64];
+extern U64 bishop_magic_number[64];
 /* mask_pawn_attacks(sd, sq)
    Rôle : calcule et renvoie le bitboard des cases attaquées par un pion placé sur sq,
           pour le camp/côté sd (ex: WHITE/BLACK).
@@ -179,7 +186,9 @@ U64 mask_rook_attacks(square sq);
 
 U64 mask_rook_attacks_on_the_fly(square sq, U64 block);
 
-/* init_pawn_leaper_attacks()
+U64 find_magic_number(square sq, int relevant_bits, flags f);
+void init_magic_number();
+/* init_leaper_attacks()
    Rôle : pré-calcule/initialise les tables d’attaques des différentes pieces
           utilisées par le moteur pour obtenir rapidement les attaques depuis n’importe quelle case.
 
