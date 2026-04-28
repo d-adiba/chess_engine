@@ -38,7 +38,7 @@ typedef enum {
 
 static inline int get_bit(U64 bitboard, square sq)
 {
-    return ((bitboard >> sq) & 1ULL);
+    return ((bitboard) >> sq) & 1ULL);
 }
 
 /* set_bit(bitboard, sq)

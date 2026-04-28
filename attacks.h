@@ -86,14 +86,11 @@ extern U64 knight_attacks[64];
    Déclarée ici (extern) et définie une seule fois dans attacks.c */
 extern U64 king_attacks[64];
 
-/* Table des attaques de fou pré-calculées.
-   bishop_attacks[sq] contient le bitboard des cases attaquées par le fou  placé case sq
-   Déclarée ici (extern) et définie une seule fois dans attacks.c */
-extern U64 bishop_attacks[64];
+extern U64 bishop_attacks[64][512];
+extern U64 rook_attacks[64][4096]; 
 
-
-extern U64 bishop_attacks[64];
-
+extern U64 bishop_masks[64];
+extern U64 rook_masks[64];
 
 /*
  * Tableau recapitulant  le nombre de deplacment selon 
@@ -186,6 +183,7 @@ U64 mask_rook_attacks(square sq);
 
 U64 mask_rook_attacks_on_the_fly(square sq, U64 block);
 
+
 U64 find_magic_number(square sq, int relevant_bits, flags f);
 void init_magic_number();
 /* init_leaper_attacks()
@@ -195,5 +193,22 @@ void init_magic_number();
    Effet :
    - Remplit les tableaux globaux (ex: pawn_attacks, knight_attacks ... etc) avec les masques calculés.*/
 void init_leaper_attacks(void);
+void init_all();
 
+void init_slider_attacks(flags fg);
+static inline U64 get_bishop_attacks(square sq, U64 occupancy)
+{
+	occupancy &= bishop_masks[sq]; 
+	occupancy *= bishop_magic_number[sq]; 
+	occupancy >>= ( 64 - bishop_relevant_bits[sq]);
+	return bishop_attacks[sq][occupancy]; 
+}
+
+static inline U64 get_rook_attacks(square sq, U64 occupancy) 
+{
+	occupancy &= rook_masks[sq]; 
+	occupancy *= rook_magic_number[sq]; 
+	occupancy >>= ( 64 - rook_relevant_bits[sq]);
+	return rook_attacks[sq][occupancy]; 
+}
 #endif

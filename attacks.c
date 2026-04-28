@@ -33,9 +33,13 @@ const int rook_relevant_bits[64] = {
 
 U64 pawn_attacks[2][64];
 U64 knight_attacks[64]; 
-U64 king_attacks[64]; 
-U64 bishop_attacks[64];
-U64 rook_attacks[64];
+U64 king_attacks[64];
+
+U64 bishop_masks[64];
+U64 rook_masks[64];
+
+U64 bishop_attacks[64][512];
+U64 rook_attacks[64][4096];
 U64 rook_magic_number[64];
 U64 bishop_magic_number[64]; 
 /**
@@ -236,24 +240,24 @@ U64 mask_bishop_attacks_on_the_fly(square sq, U64 block)
     tr = sq / 8; 
     tf = sq % 8;
 
-    for (r = tr + 1, f = tf + 1; r <= 6 && f <= 6; r++, f++)
+    for (r = tr + 1, f = tf + 1; r <= 7 && f <= 7; r++, f++)
     {
 	  attacks_result |= (1ULL << ( r * 8 + f));
 	  if ( block & (1ULL << ( r * 8 + f))) break;
     }
-    for (r = tr - 1, f = tf + 1; r >= 1 && f <= 6; r--, f++)
+    for (r = tr - 1, f = tf + 1; r >= 0 && f <= 7; r--, f++)
     {
 	  attacks_result |= (1ULL << ( r * 8 + f));
 	  if ( block & (1ULL << ( r * 8 + f))) break;
     }
 
 
-    for (r = tr + 1, f = tf - 1; r <= 6 && f >= 1; r++, f--)
+    for (r = tr + 1, f = tf - 1; r <= 7 && f >= 0; r++, f--)
     {
 	  attacks_result |= (1ULL << ( r * 8 + f));
 	  if ( block & (1ULL << ( r * 8 + f))) break;
     }
-    for (r = tr - 1, f = tf - 1; r >= 1 && f >= 1; r--, f--)
+    for (r = tr - 1, f = tf - 1; r >= 0 && f >= 0; r--, f--)
     {
 	  attacks_result |= (1ULL << ( r * 8 + f));
 	  if ( block & (1ULL << ( r * 8 + f))) break;
@@ -270,24 +274,24 @@ U64 mask_rook_attacks_on_the_fly(square sq, U64 block)
     tr = sq / 8; 
     tf = sq % 8;
 
-    for (r = tr + 1; r <= 6 ; r++)
+    for (r = tr + 1; r <= 7 ; r++)
     {
 	  attacks_result |= (1ULL << ( r * 8 + tf));
 	  if ( block & (1ULL << ( r * 8 + tf))) break;
     }
-    for (f = tf + 1; f <= 6; f++)
+    for (f = tf + 1; f <= 7; f++)
     {
 	  attacks_result |= (1ULL << ( tr * 8 + f));
 	  if ( block & (1ULL << ( tr * 8 + f))) break;
     }
 
 
-    for ( r = tr - 1; r >= 1; r--)
+    for ( r = tr - 1; r >= 0; r--)
     {
 	  attacks_result |= (1ULL << ( r * 8 + tf));
 	  if ( block & (1ULL << ( r * 8 + tf))) break;
     }
-    for (f = tf - 1;  f >= 1; f--)
+    for (f = tf - 1;  f >= 0; f--)
     {
 	  attacks_result |= (1ULL << ( tr * 8 + f));
 	  if ( block & (1ULL << ( tr * 8 + f))) break;
@@ -336,10 +340,6 @@ void init_leaper_attacks()
 	knight_attacks[sq] = mask_knight_attacks(sq);
 	//table  d'attaque du king
 	king_attacks[sq] = mask_king_attacks(sq);
-	//masque d'attaque du bishop	
-	bishop_attacks[sq] = mask_bishop_attacks(sq);
-	//masque d'attage du rook	
-	rook_attacks[sq] = mask_rook_attacks(sq); 	
     }
 }
 
@@ -420,14 +420,48 @@ void init_magic_number()
 {
 	for ( int i = 0; i < 64; i++)
 	{
-		rook_magic_number[i] =  find_magic_number (i, rook_relevant_bits[i], rook);
-		printf(" 0x%llxULL,\n", rook_magic_number[i]); 
+		rook_magic_number[i] =  find_magic_number (i, rook_relevant_bits[i], rook); 
 	}
-	printf ("\n++++++++++++bishop+++++++++++\n");
 	for ( int i = 0; i < 64; i++)
 	{
 		bishop_magic_number[i] = find_magic_number(i, bishop_relevant_bits[i],bishop); 
-		printf(" 0x%llxULL,\n", bishop_magic_number[i]);
+	}
+}
+void init_all()
+{
+	init_leaper_attacks(); 
+	init_magic_number();
+	init_slider_attacks(bishop);
+	init_slider_attacks(rook);
+}
+
+
+void init_slider_attacks(flags fg)
+{
+	U64 attack_mask, occupancy; 
+	int magic_index, relevant_bits_count, occupancy_indicies;	
+	for (int sq = 0; sq < 64 ;  sq++)
+	{
+		bishop_masks[sq] = mask_bishop_attacks(sq); 
+		rook_masks[sq] = mask_rook_attacks(sq); 
+		attack_mask = (fg == bishop) ? bishop_masks[sq] : rook_masks[sq];
+		relevant_bits_count = count_bits(attack_mask); 
+		occupancy_indicies =  (1 << relevant_bits_count);
+		for ( int index = 0;  index < occupancy_indicies; index++)
+		{
+			if ( fg == bishop) 
+			{
+				occupancy = set_occupancy (index, relevant_bits_count, attack_mask);
+				magic_index = (occupancy * bishop_magic_number[sq])>> (64 - bishop_relevant_bits[sq]);
+				bishop_attacks[sq][magic_index] = mask_bishop_attacks_on_the_fly(sq, occupancy); 	
+			}
+			else
+			{
+				 occupancy = set_occupancy(index, relevant_bits_count, attack_mask); 
+				 magic_index = (occupancy * rook_magic_number[sq])>> (64 - rook_relevant_bits[sq]);
+				 rook_attacks[sq][magic_index] = mask_rook_attacks_on_the_fly(sq, occupancy); 	
+			}
+		}
 	}
 }
 
