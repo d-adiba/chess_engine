@@ -1,4 +1,5 @@
 #include "bitboard.h"
+#include <string.h>
 
 
 
@@ -85,4 +86,77 @@ void print_board(board_t  *b)
 	printf("\n");
 }
 
+void parse_fen(char *fen, board_t *b)
+{
+    int sq, piece, offset; 
+    memset(b->board, 0ULL, sizeof(b->board));
+    memset(b->occupancies, 0ULL, sizeof(b->occupancies));
+    b->side = 0;
+    b->enpassant = no_sq;
+    b->castle = 0;
+    
+    for (int rank = 0; rank < 8; rank++)
+    {
+        for (int file = 0; file < 8; file++)
+        {
+             sq = rank * 8 + file;
+            
+            if ((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z'))
+            {
+                piece = char_pieces[*fen];
+                set_bit(b->board + piece, sq);
+            }
+            
+            if (*fen >= '0' && *fen <= '9')
+            {
+                offset = *fen - '0';
+                file += offset -1 ;
+            }
+	    fen++;
+            
+        }
+            if (*fen == '/') fen++;
+    }
+    
+    fen++;
+    
+    (*fen == 'w') ? (b->side = white) : (b->side = black);
+    
+    fen += 2;
+    
+    while (*fen != ' ')
+    {
+        switch (*fen)
+        {
+            case 'K': b->castle |= wk; break;
+            case 'Q': b->castle |= wq; break;
+            case 'k': b->castle |= bk; break;
+            case 'q': b->castle |= bq; break;
+            case '-': break;
+        }
+
+        fen++;
+    }
+    
+    fen++;
+    
+    if (*fen != '-')
+    {
+        int file = fen[0] - 'a';
+        int rank = 8 - (fen[1] - '0');
+        
+        b->enpassant = rank * 8 + file;
+    }
+    else
+        b->enpassant = no_sq;
+    
+    for (int piece = P; piece <= K; piece++)
+        b->occupancies[white] |= b->board[piece];
+    
+    for (int piece = p; piece <= k; piece++)
+        b->occupancies[black] |= b->board[piece];
+    
+    b->occupancies[both] |= b->occupancies[white];
+    b->occupancies[both] |= b->occupancies[black];
+}
 

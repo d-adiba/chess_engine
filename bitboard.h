@@ -153,6 +153,6 @@ static inline int get_ls1b_index(U64 bitboard)
 	return -1;
 }
 void print_board(board_t *b);
-
+void parse_fen(char *fen, board_t *b);
 
 #endif

@@ -211,4 +211,9 @@ static inline U64 get_rook_attacks(square sq, U64 occupancy)
 	occupancy >>= ( 64 - rook_relevant_bits[sq]);
 	return rook_attacks[sq][occupancy]; 
 }
+static inline U64 get_queen_attacks(square sq, U64 occupancy)
+{
+	return get_bishop_attacks(sq,occupancy) | get_rook_attacks(sq,occupancy);
+}
+
 #endif
