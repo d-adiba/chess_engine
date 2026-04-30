@@ -1,18 +1,24 @@
 #include "attacks.h"
 #include "random.h"
+#include "bitboard.h"
+#include "move.h"
+#define tricky_position "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
+#define killer_position "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
+#define cmk_position "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 "
 
 int main()
 {
-	init_all();
-	board_t b;
-	U64 occupancy = 0ULL;
-       set_bit(&occupancy, b6);	
-       set_bit(&occupancy, d6);	
-       set_bit(&occupancy, f6);	
-       set_bit(&occupancy, b4);	
-       set_bit(&occupancy, c3);	
-       set_bit(&occupancy, d3);	
-       set_bit(&occupancy, e3);	
-	print_bitboard(get_queen_attacks(d4, occupancy));
-
+    init_all();
+    
+   
+    moves move_list[1];
+    
+   
+    move_list->count = 0;
+    
+   
+    add_move(move_list, encode_move(d7, e8, K, K, 1, 0, 0, 1));
+    
+    
+    print_move_list(move_list);
 }

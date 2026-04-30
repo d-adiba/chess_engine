@@ -1,7 +1,9 @@
 #include "bitboard.h"
 #include <string.h>
+#include "attacks.h"
 
 
+const char  *unicode_pieces[12] = {"♙", "♘", "♗", "♖", "♕", "♔", "♟︎", "♞", "♝", "♜", "♛", "♚"};
 
 
 
@@ -19,24 +21,7 @@ const char squares[64][3] = {
 
 
 
-static const char ascii_pieces[13] = "PNBRQKpnbrqk";
 
-char *unicode_pieces[12] = {"♙", "♘", "♗", "♖", "♕", "♔", "♟︎", "♞", "♝", "♜", "♛", "♚"};
-
-static const int char_pieces[] = {
-    ['P'] = P,
-    ['N'] = N,
-    ['B'] = B,
-    ['R'] = R,
-    ['Q'] = Q,
-    ['K'] = K,
-    ['p'] = p,
-    ['n'] = n,
-    ['b'] = b,
-    ['r'] = r,
-    ['q'] = q,
-    ['k'] = k
-};
 void print_bitboard(U64 bitboard)
 {
     int rank, file, sq;
@@ -158,5 +143,22 @@ void parse_fen(char *fen, board_t *b)
     
     b->occupancies[both] |= b->occupancies[white];
     b->occupancies[both] |= b->occupancies[black];
+}
+
+void print_attacked_squares(side s, board_t *b)
+{
+	int file, rank, sq; 
+	printf("\n");
+	for (rank = 0; rank < 8; rank++)
+	{
+		printf("  %d ", 8 - rank);
+		for ( file = 0; file < 8; file++)
+        	{
+            		 sq = rank * 8 + file;
+           		 printf(" %d", is_square_attacked(sq, s, b) ? 1 : 0);
+        	}
+       		 printf("\n");
+    }
+    printf("\n     a b c d e f g h\n\n");
 }
 

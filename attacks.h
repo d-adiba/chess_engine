@@ -216,4 +216,33 @@ static inline U64 get_queen_attacks(square sq, U64 occupancy)
 	return get_bishop_attacks(sq,occupancy) | get_rook_attacks(sq,occupancy);
 }
 
+
+/*
+ * Pour savoir si une case est attaqué on par du principe que l'attaque est reciproque
+ * Si une case est attaqué par un pion de color white alors un pion de couleur black posé
+ * a cette position attaque le pion à la case testé
+ * de ce principe  il suffit de regardé les case attaqué par un pion de couleur opposé
+ * et le couplé avec les cases presente sur l'échéquier 
+ *
+ * le principe est le meme pour les autre type de piece saut que le pattern d'attaque est
+ * le meme peu importe la couleur 
+ * */ 
+static inline int is_square_attacked(square sq, side s, board_t *b_t)
+{
+    if ((s == white) && (pawn_attacks[black][sq] & b_t->board[P])) return 1;
+    
+    if ((s == black) && (pawn_attacks[white][sq] & b_t->board[p])) return 1;
+    if (knight_attacks[sq] & ((s == white) ? b_t->board[N] : b_t->board[n])) return 0;
+    
+    if (get_bishop_attacks(sq, b_t->occupancies[both]) & ((s == white) ? b_t->board[B] : b_t->board[b])) return 1;
+
+    if (get_rook_attacks(sq, b_t->occupancies[both]) & ((s == white) ? b_t->board[R] : b_t->board[r])) return 1;    
+
+    if (get_queen_attacks(sq, b_t->occupancies[both]) & ((s == white) ? b_t->board[Q] : b_t->board[q])) return 1;
+    
+    if (king_attacks[sq] & ((s == white) ? b_t->board[K] : b_t->board[k])) return 1;
+
+    return 0;
+}
+
 #endif

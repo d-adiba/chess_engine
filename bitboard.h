@@ -17,10 +17,28 @@ typedef enum {
 
 extern const char squares[64][3];
 
-// side to move (colors) 
 typedef enum {
     white, black, both
 } side;
+typedef enum { P, N, B, R, Q, K, p, n, b, r, q, k } pieces;
+
+static const char ascii_pieces[13] = "PNBRQKpnbrqk";
+
+extern const char  *unicode_pieces[12];
+static const int char_pieces[] = {
+    ['P'] = P,
+    ['N'] = N,
+    ['B'] = B,
+    ['R'] = R,
+    ['Q'] = Q,
+    ['K'] = K,
+    ['p'] = p,
+    ['n'] = n,
+    ['b'] = b,
+    ['r'] = r,
+    ['q'] = q,
+    ['k'] = k
+};
 
 /*
 
@@ -41,7 +59,6 @@ typedef enum {
 
 enum { wk = 1, wq = 2, bk = 4, bq = 8 };
 
-typedef enum { P, N, B, R, Q, K, p, n, b, r, q, k } pieces;
 
 
 
@@ -154,5 +171,6 @@ static inline int get_ls1b_index(U64 bitboard)
 }
 void print_board(board_t *b);
 void parse_fen(char *fen, board_t *b);
+void print_attacked_squares(side s, board_t *b);
 
 #endif
