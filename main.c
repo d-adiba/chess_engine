@@ -9,16 +9,14 @@
 int main()
 {
     init_all();
-    
+    board_t b_t;
+    moves move_list;
+    move_list.count = 0;
+    parse_fen(tricky_position, &b_t);
+    print_board(&b_t);
    
-    moves move_list[1];
-    
-   
-    move_list->count = 0;
-    
-   
-    add_move(move_list, encode_move(d7, e8, K, K, 1, 0, 0, 1));
-    
-    
-    print_move_list(move_list);
+    printf("Move list for position : %s\n\n", tricky_position);
+    generate_moves(&b_t, &move_list);
+    printf("Total moves : %d\n\n", move_list.count);
+    print_move_list(&move_list);
 }

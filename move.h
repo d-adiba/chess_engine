@@ -66,14 +66,14 @@ static inline void add_move(moves *move_list, int move)
     move_list->moves[move_list->count] = move;
     move_list->count++;
 }
-void generate_pawn_moves(board_t *b_t, int piece);
-void generate_knight_moves(board_t *b_t, int piece);
-void generate_bishop_moves(board_t *b_t, int piece);
-void generate_rook_moves(board_t *b_t, int piece);
-void generate_queen_moves(board_t *b_t, int piece);
-void generate_king_moves(board_t *b_t, int piece);
-void generate_castling_moves(board_t *b_t, int piece);
-void generate_moves(board_t *b_t);
+void generate_pawn_moves(board_t *b_t, int piece, moves *move_list);
+void generate_knight_moves(board_t *b_t, int piece, moves *move_list);
+void generate_bishop_moves(board_t *b_t, int piece, moves *move_list);
+void generate_rook_moves(board_t *b_t, int piece, moves *move_list);
+void generate_queen_moves(board_t *b_t, int piece, moves *move_list);
+void generate_king_moves(board_t *b_t, int piece, moves *move_list);
+void generate_castling_moves(board_t *b_t, int piece, moves *move_list);
+void generate_moves(board_t *b_t, moves *move_list);
 void print_move(int move);
 void print_move_list(moves *move_list);
 
