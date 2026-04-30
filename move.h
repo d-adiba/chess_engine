@@ -4,6 +4,7 @@
 #include "bitboard.h"
 #include "attacks.h"
 
+
 /*
           binary move bits                               hexidecimal constants
     
@@ -58,7 +59,108 @@ typedef struct  {
     int count;
 } moves;
 
+enum { all_moves, only_captures};
 
+static inline int  make_move(board_t *b_t,board_t *save, int move, int move_flag)
+{
+    if (move_flag == all_moves)
+    {
+        copy_board(save, b_t);
+        int source_square = get_move_source(move);
+        int target_square = get_move_target(move);
+        int piece = get_move_piece(move);
+        int promoted_piece = get_move_promoted(move);
+        int capture = get_move_capture(move);
+        int double_push = get_move_double(move);
+        int enpassant = get_move_enpassant(move);
+        int castling = get_move_castling(move);
+
+        pop_bit((b_t->board) + piece, source_square);
+        set_bit((b_t->board) + piece, target_square);      
+        
+        if (capture)
+        {
+            int start, end; 
+            if (b_t->side == white)
+            {
+                start = p;
+                end = k;
+            }
+            else
+            {
+                start = P;
+                end = K;
+            }
+            for (int i = start; i <= end; i++)
+            {
+                if (get_bit(b_t->board[i], target_square))
+                {
+                    pop_bit(b_t->board + i, target_square);
+                    break;
+                }
+            }
+
+        }
+        if (promoted_piece)
+        {
+            pop_bit(b_t->board + (b_t->side == white ? P : p), target_square);
+            set_bit(b_t->board + promoted_piece, target_square);
+        }
+        if (enpassant)
+        {
+            if (b_t->side  == white)
+            {
+                pop_bit(b_t->board + p, target_square+8);
+            }
+            else
+            {
+                pop_bit(b_t->board + P, target_square-8);
+            }
+        }
+        b_t->enpassant = no_sq;
+        if (double_push)
+        {         
+            if (b_t->side == white)
+                b_t->enpassant = target_square + 8;
+            else
+                b_t->enpassant = target_square - 8;
+        }
+        if (castling)
+        {
+            if (target_square == g1)
+            {
+                pop_bit(b_t->board + R, h1);
+                set_bit(b_t->board + R, f1);
+            }
+            else if (target_square == c1)
+            {
+                pop_bit(b_t->board + R, a1);
+                set_bit(b_t->board + R, d1);
+            }
+            else if (target_square == g8)
+            {
+                pop_bit(b_t->board + r, h8);
+                set_bit(b_t->board + r, f8);
+            }
+            else if (target_square == c8)
+            {
+                pop_bit(b_t->board + r, a8);
+                set_bit(b_t->board + r, d8);
+            }
+        }
+    }
+    
+    else
+    {
+        if (get_move_capture(move))
+        make_move(b_t, save , move, all_moves);
+        else
+            return 0;
+    }
+
+
+
+}
 
 
 static inline void add_move(moves *move_list, int move)

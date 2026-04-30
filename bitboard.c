@@ -62,13 +62,11 @@ void print_board(board_t  *b)
 		printf("\n");
 	}
     	printf("\n     a  b  c  d  e  f  g  h\n\n");
-	printf("\n     Side: %s",  !b->side ? "black": "white");
+	printf("\n     Side: %s",  b->side == black ? "black": "white");
 	printf("\n     Enpassant: %s", (b->enpassant != no_sq) ? get_square(b->enpassant): "no");
 	printf("\n     Castling: %c%c%c%c", (b->castle & wk)? 'K':'-',  (b->castle & wq)? 'Q':'-',   (b->castle & bk)? 'k':'-',   (b->castle & bq)? 'q' : '-');   
 	
-	for( i = P; i <= k; i++)
-		print_bitboard(b->board[i]);
-	printf("\n");
+	
 }
 
 void parse_fen(char *fen, board_t *b)
@@ -97,14 +95,12 @@ void parse_fen(char *fen, board_t *b)
                 offset = *fen - '0';
                 file += offset -1 ;
             }
-	    fen++;
+	        fen++;
             
         }
-            if (*fen == '/') fen++;
+        if (*fen == '/') fen++;
     }
-    
     fen++;
-    
     (*fen == 'w') ? (b->side = white) : (b->side = black);
     
     fen += 2;
@@ -161,4 +157,3 @@ void print_attacked_squares(side s, board_t *b)
     }
     printf("\n     a b c d e f g h\n\n");
 }
-

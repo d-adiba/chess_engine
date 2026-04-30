@@ -2,6 +2,7 @@
 #define BITBOARD
 
 #include <stdio.h>
+#include <string.h>
 #define U64 unsigned long long
 
 typedef enum {
@@ -62,7 +63,7 @@ enum { wk = 1, wq = 2, bk = 4, bq = 8 };
 
 
 
-typedef struct chessboard {
+typedef struct {
 	U64 board[12];  
 	U64 occupancies[3];
 	int side; 
@@ -70,7 +71,18 @@ typedef struct chessboard {
 	int castle; 
 } board_t; 
 
-
+static inline void copy_board(board_t *dest, board_t *src)
+{
+    memcpy(dest->board, src->board, sizeof(src->board));
+    memcpy(dest->occupancies, src->occupancies, sizeof(src->occupancies));
+    dest->side = src->side;
+    dest->enpassant = src->enpassant;
+    dest->castle = src->castle;
+}
+static inline void restore_board(board_t *b_t, board_t *save)
+{
+    copy_board (b_t, save); 
+}
 /* get_bit(bitboard, sq)
    Rôle : retourne l’état (0/1) du bit correspondant à la case sq dans bitboard.
 
