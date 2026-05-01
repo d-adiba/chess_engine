@@ -1,5 +1,7 @@
 
 #include "random.h"
+#include <sys/time.h>
+#include <stdio.h>
 
 
 static uint32_t seed = 1804289383;
@@ -33,4 +35,10 @@ uint64_t get_random_u64(void)
 uint64_t get_magic_number(void)
 {
 	return get_random_u64() & get_random_u64() & get_random_u64(); 
+}
+int get_time_ms()
+{
+	struct timeval timevalue;
+	gettimeofday(&timevalue, NULL);
+	return (timevalue.tv_sec * 1000) + timevalue.tv_usec / 1000;
 }

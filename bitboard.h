@@ -1,6 +1,9 @@
 #ifndef BITBOARD
 #define BITBOARD
 
+
+#define DEPTH 6
+
 #include <stdio.h>
 #include <string.h>
 #define U64 unsigned long long
@@ -63,6 +66,7 @@ enum { wk = 1, wq = 2, bk = 4, bq = 8 };
 
 
 
+
 typedef struct {
 	U64 board[12];  
 	U64 occupancies[3];
@@ -71,18 +75,19 @@ typedef struct {
 	int castle; 
 } board_t; 
 
-static inline void copy_board(board_t *dest, board_t *src)
-{
-    memcpy(dest->board, src->board, sizeof(src->board));
-    memcpy(dest->occupancies, src->occupancies, sizeof(src->occupancies));
-    dest->side = src->side;
-    dest->enpassant = src->enpassant;
-    dest->castle = src->castle;
-}
-static inline void restore_board(board_t *b_t, board_t *save)
-{
-    copy_board (b_t, save); 
-}
+
+#define copy_board(b_t)                                             \
+    U64 bitboards_copy[12], occupancies_copy[3];                          \
+    int side_copy, enpassant_copy, castle_copy;                           \
+    memcpy(bitboards_copy, b_t->board, 96);                                \
+    memcpy(occupancies_copy, b_t->occupancies, 24);                            \
+    side_copy = b_t->side, enpassant_copy = b_t->enpassant, castle_copy = b_t->castle;   \
+                                           \
+
+#define restore_board(b_t)                                                       \
+    memcpy(b_t->board, bitboards_copy, 96);                                \
+    memcpy(b_t->occupancies, occupancies_copy, 24);                            \
+    b_t->side = side_copy, b_t->enpassant = enpassant_copy, b_t->castle = castle_copy;   \
 /* get_bit(bitboard, sq)
    Rôle : retourne l’état (0/1) du bit correspondant à la case sq dans bitboard.
 
@@ -177,7 +182,7 @@ static inline  int count_bits( U64 bitboard)
  * */
 static inline int get_ls1b_index(U64 bitboard)
 {
-	if(bitboard)
+    	if(bitboard)
 		return count_bits( (bitboard & -bitboard) -1);
 	return -1;
 }

@@ -1,5 +1,10 @@
 FILES:= $(wildcard *.[c])
+
 all:
-	gcc -oFast $(FILES) -o drie 
+	gcc $(FILES)  -o drie 
+fast:
+	gcc $(FILES) -Ofast -o drie
+gdb: 	
+	gcc -g $(FILES) -o drie
 debug:
-	gcc -Wall -Wextra -Werror -g $(FILES) -o drie
+	gcc -Wall -Wextra -Werror  $(FILES) -o drie

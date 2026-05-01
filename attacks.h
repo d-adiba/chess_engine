@@ -227,12 +227,12 @@ static inline U64 get_queen_attacks(square sq, U64 occupancy)
  * le principe est le meme pour les autre type de piece saut que le pattern d'attaque est
  * le meme peu importe la couleur 
  * */ 
-static inline int is_square_attacked(square sq, side s, board_t *b_t)
+static inline int is_square_attacked(int  sq, side s, board_t *b_t)
 {
     if ((s == white) && (pawn_attacks[black][sq] & b_t->board[P])) return 1;
     
     if ((s == black) && (pawn_attacks[white][sq] & b_t->board[p])) return 1;
-    if (knight_attacks[sq] & ((s == white) ? b_t->board[N] : b_t->board[n])) return 0;
+    if (knight_attacks[sq] & ((s == white) ? b_t->board[N] : b_t->board[n])) return 1;
     
     if (get_bishop_attacks(sq, b_t->occupancies[both]) & ((s == white) ? b_t->board[B] : b_t->board[b])) return 1;
 
