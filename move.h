@@ -538,5 +538,5 @@ static inline void generate_moves(board_t *b_t, moves *move_list)
 }
 
 void print_move_test(int move);
-
+void print_move_UCI(int move);
 #endif 

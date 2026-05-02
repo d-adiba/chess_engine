@@ -37,4 +37,10 @@ void print_move_list(moves *move_list)
     }
     printf("\tTotal moves: %d\n\n", move_list->count);
 }
-
+void print_move_UCI(int move)
+{
+    printf("%s%s", get_square(get_move_source(move)), get_square(get_move_target(move)));
+    if (get_move_promoted(move))
+        printf("%c", promoted_pieces[get_move_promoted(move)]);
+    printf("\n");
+}

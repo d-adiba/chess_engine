@@ -166,7 +166,8 @@ static inline const char *get_square(square sq)
 /*
  *Compter le nombre de bit dans un bitboard
  * */
-static inline  int count_bits( U64 bitboard)
+#define count_bits(bitboard) (__builtin_popcountll(bitboard))
+/*static inline  int count_bits( U64 bitboard)
 {
 	int count = 0; 
 	while (bitboard)
@@ -176,16 +177,18 @@ static inline  int count_bits( U64 bitboard)
 		bitboard &= bitboard - 1; 	
 	}
 	return count;
-}
+}*/
 /*
  *renvoie l'index du 1er bit le moins significatif 
  * */
-static inline int get_ls1b_index(U64 bitboard)
+
+#define get_ls1b_index(bitboard) (__builtin_ctzll(bitboard))
+/*static inline int get_ls1b_index(U64 bitboard)
 {
     	if(bitboard)
 		return count_bits( (bitboard & -bitboard) -1);
 	return -1;
-}
+}*/
 void print_board(board_t *b);
 void parse_fen(char *fen, board_t *b);
 void print_attacked_squares(side s, board_t *b);

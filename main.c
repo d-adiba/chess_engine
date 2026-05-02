@@ -10,16 +10,12 @@
 #define test "4k3/3N4/8/8/8/8/8/8 b KQkq - 0 1" 
 int main()
 {
-    // init all
     init_all();
     board_t b_t, save;
     long long  nodes = 0;
     
-    // parse fen
     parse_fen(tricky_position, &b_t);
-    // create move list instance
     moves move_list;
-    int start_time = get_time_ms();
-    perft_driver(DEPTH, &b_t, &nodes);
-    printf("Perft(%d): %lld\n", DEPTH, nodes);
+    perft_test(DEPTH, &b_t);
+    return 0;
 }
