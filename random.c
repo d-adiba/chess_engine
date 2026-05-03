@@ -36,7 +36,7 @@ uint64_t get_magic_number(void)
 {
 	return get_random_u64() & get_random_u64() & get_random_u64(); 
 }
-int get_time_ms()
+long get_time_ms()
 {
 	struct timeval timevalue;
 	gettimeofday(&timevalue, NULL);

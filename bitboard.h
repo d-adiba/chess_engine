@@ -2,7 +2,7 @@
 #define BITBOARD
 
 
-#define DEPTH 6
+
 
 #include <stdio.h>
 #include <string.h>
