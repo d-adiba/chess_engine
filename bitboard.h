@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 #define U64 unsigned long long
+#define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
 
 typedef enum {
     a8, b8, c8, d8, e8, f8, g8, h8,

@@ -2,6 +2,10 @@
 #define UCI_H
 #include "bitboard.h"
 #include "move.h"
+#include <stdlib.h>
 
 int parse_move(char *move_str, board_t *b_t);
+void parse_position(char *command, board_t *b_t);
+void parse_go(char *command);
+void uci_loop(board_t *b_t);
 #endif

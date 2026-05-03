@@ -1,20 +1,19 @@
-FILES:= $(wildcard *.[c])
-.silent: fast gdb debug bgrecord
-MAKEFLAGS += --no-print-directory
+CC =  gcc
+CFLAGS = -Ofast  -DVERSION=\"$(shell git describe --tags --always 2>/dev/null || echo 'dev')\"
+SRCS = bitboard.c move.c uci.c random.c attacks.c  chipolata.c
+OBJS = $(SRCS:.c=.o)
 
-all:
-	@gcc $(FILES)  -o drie
-fast:
-	@gcc $(FILES) -Ofast -o drie
-gdb: 	
-	@gcc -g $(FILES) -o drie
-debug:
-	@gcc -Wall -Wextra -Werror  $(FILES) -o drie
-pgo:
-	@gcc -Ofast -fprofile-generate -march=native $(FILES) -o drie
-	@./drie
-	@gcc -Ofast -fprofile-use -march=native $(FILES) -o drie
-bgrecord:
-	@echo "Program drie lancé en arrière plan resultats enregistrés dans bgrecord.txt"
-	@(make fast && ./drie > bgrecord.txt 2>&1 && echo "program terminé") &
+
+all: chipolata
+
+chipolata: $(OBJS)
+	$(CC) -o $@ $^
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS) chipolata
+
+.PHONY: all clean
 
