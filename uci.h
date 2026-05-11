@@ -6,6 +6,6 @@
 
 int parse_move(char *move_str, board_t *b_t);
 void parse_position(char *command, board_t *b_t);
-void parse_go(char *command);
+void parse_go(char *command, board_t *b_t);
 void uci_loop(board_t *b_t);
 #endif

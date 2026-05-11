@@ -1,5 +1,6 @@
 
 #include "uci.h"
+#include "atomic/eval.h"
 
 int parse_move(char *move_str, board_t *b_t)
 {
@@ -9,7 +10,6 @@ int parse_move(char *move_str, board_t *b_t)
     int source_square = (move_str[0] - 'a') + (8 - (move_str[1] - '0')) * 8;
     int target_square = (move_str[2] - 'a') + (8 - (move_str[3] - '0')) * 8;
     int promotion_piece =  (move_str[4]) ? char_pieces[move_str[4]] : 0;
-    printf("Source square: %s, Target square: %s, Promotion piece: %c\n", get_square(source_square), get_square(target_square), promotion_piece ? move_str[4] : ' ');
     if (promotion_piece)
     {
         promotion_piece = (b_t->side == black) ? char_pieces[move_str[4]] : char_pieces[move_str[4] - 32];
@@ -75,7 +75,7 @@ void parse_position(char *command, board_t *b_t)
     printf("\n");
 }
 
-void parse_go(char *command)
+void parse_go(char *command, board_t *b_t)
 {
     int depth = -1;
     
@@ -86,8 +86,7 @@ void parse_go(char *command)
     
     else
         depth = 6;
-    
-    printf("depth: %d\n", depth);
+    search_position(depth, b_t);
 }
 
 void uci_loop(board_t *b_t)
@@ -96,9 +95,7 @@ void uci_loop(board_t *b_t)
     setbuf(stdin, NULL);
 
     char input[2000];
-    printf("id name Chipolata Chess %s\n", VERSION);
-    printf("id author Adiba Detche\n");
-    printf("uciok\n");
+    
 
 
     while(1)
@@ -124,7 +121,7 @@ void uci_loop(board_t *b_t)
         }
         if (strncmp(input, "go", 2) == 0)
         {
-            parse_go(input);
+            parse_go(input, b_t);
             continue;
         }
         if (strncmp(input, "ucinewgame", 10) == 0)
@@ -142,6 +139,12 @@ void uci_loop(board_t *b_t)
             printf("id author Adiba Detche\n");
             printf("uciok\n");
             continue;
+        }
+        if(strncmp(input, "mm", 2) == 0)
+        {
+            make_atomic_move(b_t,parse_move(input + 3, b_t),all_moves);
+            print_board(b_t);
+            printf("\n");
         }
     }
 }

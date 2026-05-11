@@ -179,6 +179,7 @@ static inline int  make_atomic_move(board_t *b_t, int move, int move_flag)
         b_t->occupancies[both] = b_t->occupancies[white] | b_t->occupancies[black];
         if (!((b_t->side == white) ? b_t->board[k] : b_t->board[K]))
         {
+            if(parse_move("h1e1", b_t) == move) printf("king absent\n");
             restore_board(b_t);
             return 0;
         }
@@ -196,6 +197,7 @@ static inline int  make_atomic_move(board_t *b_t, int move, int move_flag)
             int piece_inv = (b_t->side == white)? K : k;
             if(!get_atomic_explosion_attacks(get_ls1b_index(b_t->board[piece]),b_t->board[piece_inv]))
             {
+                if(parse_move("h1e1", b_t) == move) printf(" king under attack\n");
 
                 restore_board(b_t);
                 return 0;
