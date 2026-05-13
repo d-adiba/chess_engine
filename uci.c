@@ -1,6 +1,7 @@
 
 #include "uci.h"
 #include "atomic/eval.h"
+#include "atomic/test_atomic.h"
 
 int parse_move(char *move_str, board_t *b_t)
 {
@@ -82,11 +83,25 @@ void parse_go(char *command, board_t *b_t)
     char *current_depth = NULL;
     
     if (current_depth = strstr(command, "depth"))
+    {
         depth = atoi(current_depth + 6);
-    
+        if (depth == 0) depth = 6; 
+        search_position(depth, b_t);
+
+    }
     else
-        depth = 6;
-    search_position(depth, b_t);
+    {
+        if (current_depth = strstr(command, "perft"))
+        {
+            depth = atoi(current_depth + 6);
+            if (depth == 0) depth = 6;
+            perft_atomic_test(depth,b_t);
+        }
+    } 
+    if(current_depth = strstr(command, "wtime"))
+    {
+        search_position(6,b_t);
+    }
 }
 
 void uci_loop(board_t *b_t)
@@ -137,6 +152,7 @@ void uci_loop(board_t *b_t)
         {
             printf("id name Chipolata Chess %s\n", VERSION);
             printf("id author Adiba Detche\n");
+            printf("option name UCI_Variant type combo default atomic var atomic\n");
             printf("uciok\n");
             continue;
         }

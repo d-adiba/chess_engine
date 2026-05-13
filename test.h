@@ -2,7 +2,7 @@
 #define TEST_H
 #include "bitboard.h"
 #include "move.h"
-
+#include "atomic/move_atomic.h"
 
 
 

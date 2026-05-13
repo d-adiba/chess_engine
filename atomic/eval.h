@@ -2,7 +2,7 @@
 #define EVAL_H
 #include "move_atomic.h"
 
-extern const double materiel_score[13];
+extern const int materiel_score[13];
 
 
 
@@ -18,8 +18,44 @@ extern const int king_score[64];
 
 extern int mirror_score[128];
 
+extern const  int mvv_lva[12][12];
 
-static inline double evaluate_score(board_t *b_t)
+
+
+void print_move_scores(moves *move_list, board_t *b_t);
+
+void merge(int arr[], int left, int mid, int right, board_t *b_t);
+void merge_sort(int arr[], int left, int right, board_t *b_t);
+static inline int sort_moves(moves *move_list, board_t *b_t)
+{
+    merge_sort(move_list->moves,0,move_list->count,b_t);
+    return 0;
+}
+static inline int score_move(int move, board_t *b_t)
+{
+    if (get_move_capture(move))
+    {
+        int  target_piece, target_square; 
+        int  piece = get_move_piece(move);
+        target_square = get_move_target(move);  
+        if (piece <= K)
+            target_piece = p;
+        else
+            target_piece = P; 
+        while (target_piece <=k)
+        {
+            if (get_bit(b_t->board[target_piece], target_square))
+                break;
+            target_piece++;
+        }
+        return mvv_lva[piece][target_piece] + 100000; 
+    }
+    return 0; 
+
+}
+
+
+static inline int evaluate_score(board_t *b_t)
 {
     double score = 0; 
     U64 bitboard = 0ULL;
@@ -55,17 +91,68 @@ static inline double evaluate_score(board_t *b_t)
     return score;  
 
 }
-
-static inline float negamax(float  alpha,  float beta, int depth, board_t *b_t, int *ply, int *best_move, long long *nodes)
+static inline int quiescence(int alpha , int beta, board_t *b_t, int *ply, long long *nodes)
 {
-    int bmsf;  // best move so far 
-    float old_alpha; 
-    if (depth == 0) return evaluate_score(b_t);
-    int move_count;
+    *nodes++;
+    int evaluation = evaluate_score(b_t);
+    if (evaluation>= beta)
+        return beta; 
+    if (evaluation > alpha)
+        alpha = evaluation;
 
-    (*nodes)++;
+
     moves move_liste;
     generate_atomic_moves(b_t, &move_liste);
+    sort_moves(&move_liste,b_t);
+    for (int move_count = 0; move_count < move_liste.count; move_count++)
+    {
+        copy_board((b_t));
+        (*ply)++;
+        if (make_atomic_move(b_t,move_liste.moves[move_count],only_captures) == 0)
+        {
+            (*ply)--; 
+            continue;
+        }
+
+
+        int score = -quiescence(-beta, -alpha, b_t, ply, nodes); 
+        restore_board(b_t);
+        (*ply)--;
+        if(score >= beta) return beta; 
+        if (score > alpha) 
+        {
+            alpha = score;
+        }
+        
+
+    }
+
+    return alpha; 
+}
+
+static inline int negamax(int  alpha,  int beta, int depth, board_t *b_t, int *ply, int *best_move, long long *nodes)
+{
+    int bmsf;  // best move so far 
+    int old_alpha;
+
+
+
+    if (depth == 0) 
+        return quiescence( alpha, beta, b_t, ply, nodes);
+    int move_count;
+    int legal_move = 0; 
+    (*nodes)++;
+    int in_check = 0; 
+    if ((b_t->side == white)? b_t->board[K] : b_t->board[k])
+        in_check =  is_square_atomically_attacked((b_t->side == white)? get_ls1b_index(b_t->board[K]) : get_ls1b_index(b_t->board[k]), b_t->side ^ 1 , b_t);
+
+    if(in_check) depth++;
+
+
+    
+    moves move_liste;
+    generate_atomic_moves(b_t, &move_liste);
+    sort_moves(&move_liste,b_t);
     old_alpha = alpha;
     for (move_count = 0; move_count < move_liste.count; move_count++)
     {
@@ -76,10 +163,16 @@ static inline float negamax(float  alpha,  float beta, int depth, board_t *b_t, 
             (*ply)--; 
             continue;
         }
-        float score = -negamax(-beta, -alpha, depth -1 , b_t, ply, best_move, nodes); 
+        legal_move ++; 
+
+
+        int score = -negamax(-beta, -alpha, depth -1 , b_t, ply, best_move, nodes); 
         restore_board(b_t);
         (*ply)--;
-        if(score >= beta) return beta; 
+        if(score >= beta)
+        {
+            return beta; 
+        }
         if (score > alpha) 
         {
             alpha = score;
@@ -92,13 +185,20 @@ static inline float negamax(float  alpha,  float beta, int depth, board_t *b_t, 
         
 
     }
+    if (legal_move == 0)
+    {
+        if (in_check)
+            return  (-4900000 + *ply);
+        else 
+            return 0;
+    }
     if (old_alpha != alpha)
         *best_move = bmsf; 
-    //else *best_move = move_liste.moves[move_count -1];
-    return alpha; 
-
+    return alpha;
 }
 
 int search_position(int depth, board_t *b_t);
+
+
 
 #endif
