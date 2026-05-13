@@ -6,7 +6,7 @@ const int materiel_score[13] = {
 192,   // white bishop
 272,   // white rook
 557,   // white  queen
-000,   // white king
+00,   // white king
 -100,   // black pawn
 -153,   // black knight
 -192,   // black bishop
@@ -125,12 +125,18 @@ int  search_position(int depth, board_t *b_t)
     long long nodes = 0; ; 
     int ply = 0;
     int best_move = 0 ; 
-    float score  = negamax(-5000000, 5000000, depth, b_t, &ply, &best_move, &nodes);
+    int score  = negamax(-5000000, 5000000, depth, b_t, &ply, &best_move, &nodes);
     if (best_move)
     {
+        if (best_move)
+    {
+        printf("info score cp %d depth %d nodes %ld\n", score, depth, nodes);
+    
+        // best move placeholder
         printf("bestmove ");
-        print_move_test(best_move);
+        print_move(best_move);
         printf("\n");
+    }
     }
     return best_move;
 
@@ -139,7 +145,7 @@ void print_move_scores(moves *move_list, board_t *b_t)
 {
     printf("     Move scores:\n\n");
         
-    for (int count = 0; count <= move_list->count; count++)
+    for (int count = 0; count < move_list->count; count++)
     {
         printf("     move: ");
         print_move(move_list->moves[count]);

@@ -2,6 +2,22 @@
 #define EVAL_H
 #include "move_atomic.h"
 
+static inline void safety(board_t *b_t, board_t *s)
+{
+    memcpy(s->board, b_t->board, sizeof(s->board));
+    memcpy(s->occupancies, b_t->occupancies, sizeof(s->occupancies));
+    s->side = b_t->side;
+    s->enpassant = b_t->enpassant;
+    s->castle = b_t->castle;
+}
+static inline void restore(board_t *b_t, board_t *s)
+{
+    memcpy(b_t->board, s->board, sizeof(s->board));
+    memcpy(b_t->occupancies, s->occupancies, sizeof(s->occupancies));
+    b_t->side = s->side;
+    b_t->enpassant = s->enpassant;
+    b_t->castle = s->castle;
+}
 extern const int materiel_score[13];
 
 
@@ -48,7 +64,7 @@ static inline int score_move(int move, board_t *b_t)
                 break;
             target_piece++;
         }
-        return mvv_lva[piece][target_piece] + 100000; 
+        return mvv_lva[piece][target_piece] + 10000; 
     }
     return 0; 
 
@@ -93,20 +109,20 @@ static inline int evaluate_score(board_t *b_t)
 }
 static inline int quiescence(int alpha , int beta, board_t *b_t, int *ply, long long *nodes)
 {
-    *nodes++;
+    (*nodes)++;
     int evaluation = evaluate_score(b_t);
     if (evaluation>= beta)
         return beta; 
     if (evaluation > alpha)
         alpha = evaluation;
-
+    board_t save;
 
     moves move_liste;
     generate_atomic_moves(b_t, &move_liste);
     sort_moves(&move_liste,b_t);
     for (int move_count = 0; move_count < move_liste.count; move_count++)
     {
-        copy_board((b_t));
+        safety(b_t,&save);
         (*ply)++;
         if (make_atomic_move(b_t,move_liste.moves[move_count],only_captures) == 0)
         {
@@ -116,7 +132,7 @@ static inline int quiescence(int alpha , int beta, board_t *b_t, int *ply, long 
 
 
         int score = -quiescence(-beta, -alpha, b_t, ply, nodes); 
-        restore_board(b_t);
+        restore(b_t,&save);
         (*ply)--;
         if(score >= beta) return beta; 
         if (score > alpha) 
@@ -132,16 +148,10 @@ static inline int quiescence(int alpha , int beta, board_t *b_t, int *ply, long 
 
 static inline int negamax(int  alpha,  int beta, int depth, board_t *b_t, int *ply, int *best_move, long long *nodes)
 {
-    int bmsf;  // best move so far 
-    int old_alpha;
+    if (depth == 0) return quiescence( alpha, beta, b_t, ply, nodes);
 
-
-
-    if (depth == 0) 
-        return quiescence( alpha, beta, b_t, ply, nodes);
-    int move_count;
-    int legal_move = 0; 
     (*nodes)++;
+
     int in_check = 0; 
     if ((b_t->side == white)? b_t->board[K] : b_t->board[k])
         in_check =  is_square_atomically_attacked((b_t->side == white)? get_ls1b_index(b_t->board[K]) : get_ls1b_index(b_t->board[k]), b_t->side ^ 1 , b_t);
@@ -149,14 +159,24 @@ static inline int negamax(int  alpha,  int beta, int depth, board_t *b_t, int *p
     if(in_check) depth++;
 
 
+    int bmsf;  // best move so far 
+    int old_alpha = alpha;
+    int legal_move = 0;
+  
+    
+
+
     
     moves move_liste;
     generate_atomic_moves(b_t, &move_liste);
     sort_moves(&move_liste,b_t);
-    old_alpha = alpha;
-    for (move_count = 0; move_count < move_liste.count; move_count++)
+    board_t save; 
+    
+    
+    for (int move_count = 0; move_count < move_liste.count; move_count++)
     {
-        copy_board((b_t));
+        safety(b_t,&save);
+        
         (*ply)++;
         if (make_atomic_move(b_t,move_liste.moves[move_count],all_moves) == 0)
         {
@@ -167,7 +187,7 @@ static inline int negamax(int  alpha,  int beta, int depth, board_t *b_t, int *p
 
 
         int score = -negamax(-beta, -alpha, depth -1 , b_t, ply, best_move, nodes); 
-        restore_board(b_t);
+        restore(b_t,&save);
         (*ply)--;
         if(score >= beta)
         {
@@ -176,7 +196,7 @@ static inline int negamax(int  alpha,  int beta, int depth, board_t *b_t, int *p
         if (score > alpha) 
         {
             alpha = score;
-            if (*ply == 0)
+            if ((*ply) == 0)
             {
                 bmsf = move_liste.moves[move_count];
                 
@@ -185,10 +205,11 @@ static inline int negamax(int  alpha,  int beta, int depth, board_t *b_t, int *p
         
 
     }
+   
     if (legal_move == 0)
     {
         if (in_check)
-            return  (-4900000 + *ply);
+            return  (-49000 + *ply);
         else 
             return 0;
     }

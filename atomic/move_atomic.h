@@ -182,7 +182,7 @@ static inline int  make_atomic_move(board_t *b_t, int move, int move_flag)
             restore_board(b_t);
             return 0;
         }
-        else if (is_square_attacked((b_t->side == white) ? get_ls1b_index(b_t->board[k]) : get_ls1b_index(b_t->board[K]), b_t->side, b_t))
+        else if (is_square_atomically_attacked((b_t->side == white) ? get_ls1b_index(b_t->board[k]) : get_ls1b_index(b_t->board[K]), b_t->side, b_t))
         {
             // l'idéé ici est de surveillé les moves ou le roi est attaqué mais dont le roi adverse est dans la zone d'explosion ; ces
             // moves deviennent ainsi legaux car ce derniers n'est plus attaquable
@@ -301,7 +301,7 @@ static inline void generate_atomic_moves(board_t *b_t, moves *move_list)
                 {
                     if (!get_bit(b_t->occupancies[both], f1) && !get_bit(b_t->occupancies[both], g1))
                     {
-                        if (!is_square_attacked(e1, black,b_t) && !is_square_attacked(f1, black,b_t))
+                        if (!is_square_atomically_attacked(e1, black,b_t) && !is_square_atomically_attacked(f1, black,b_t))
                             add_move(move_list, encode_move(e1, g1, piece, 0, 0, 0, 0, 1));
                     }
                 }
@@ -310,7 +310,7 @@ static inline void generate_atomic_moves(board_t *b_t, moves *move_list)
                 {
                     if (!get_bit(b_t->occupancies[both], d1) && !get_bit(b_t->occupancies[both], c1) && !get_bit(b_t->occupancies[both], b1))
                     {
-                        if (!is_square_attacked(e1, black,b_t) && !is_square_attacked(d1, black,b_t))
+                        if (!is_square_atomically_attacked(e1, black,b_t) && !is_square_atomically_attacked(d1, black,b_t))
                             add_move(move_list, encode_move(e1, c1, piece, 0, 0, 0, 0, 1));
                     }
                 }

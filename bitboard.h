@@ -90,6 +90,7 @@ typedef struct {
     memcpy(b_t->board, bitboards_copy, 96);                                \
     memcpy(b_t->occupancies, occupancies_copy, 24);                            \
     b_t->side = side_copy, b_t->enpassant = enpassant_copy, b_t->castle = castle_copy;   \
+
 /* get_bit(bitboard, sq)
    Rôle : retourne l’état (0/1) du bit correspondant à la case sq dans bitboard.
 

@@ -64,7 +64,7 @@ void parse_position(char *command, board_t *b_t)
             if (move == 0)
                 break;
             
-            make_move(b_t, move, all_moves);
+            make_atomic_move(b_t, move, all_moves);
             
             while (*current_char && *current_char != ' ') current_char++;
             
@@ -100,7 +100,7 @@ void parse_go(char *command, board_t *b_t)
     } 
     if(current_depth = strstr(command, "wtime"))
     {
-        search_position(6,b_t);
+        search_position(7,b_t);
     }
 }
 
