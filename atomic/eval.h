@@ -49,6 +49,7 @@ static inline int sort_moves(moves *move_list, board_t *b_t)
 }
 static inline int score_move(int move, board_t *b_t)
 {
+    board_t backup;
     if (get_move_capture(move))
     {
         int  target_piece, target_square; 
@@ -64,7 +65,17 @@ static inline int score_move(int move, board_t *b_t)
                 break;
             target_piece++;
         }
-        return mvv_lva[piece][target_piece] + 10000; 
+        safety(b_t, &backup);
+        if ( make_atomic_move(b_t,move,all_moves) != 0)
+        {
+            if (b_t->board[(b_t->side == white)? K:k ] == 0ULL)
+            {
+                restore(b_t,&backup);
+                return mvv_lva[piece][target_piece] + 5000;
+            }
+        }
+        restore(b_t, &backup);
+        return mvv_lva[piece][target_piece] + 1000; 
     }
     return 0; 
 
@@ -75,7 +86,20 @@ static inline int evaluate_score(board_t *b_t)
 {
     double score = 0; 
     U64 bitboard = 0ULL;
-    int  sq; 
+    int  sq;
+    if (b_t->side == white)
+    {
+        if (!b_t->board[K])
+            score += 1000; 
+
+    }
+    else
+    {
+        if (!b_t->board[k])
+            score -= 1000; 
+
+    }
+
     for (int bb_piece =P ; bb_piece <=k; bb_piece++)
     {
         
@@ -209,7 +233,7 @@ static inline int negamax(int  alpha,  int beta, int depth, board_t *b_t, int *p
     if (legal_move == 0)
     {
         if (in_check)
-            return  (-49000 + *ply);
+            return  (-4900 + *ply);
         else 
             return 0;
     }
