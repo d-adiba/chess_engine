@@ -5,7 +5,7 @@
 #include "random.h"
 #include <string.h>
 #include <stdio.h>
-
+#include <immintrin.h>
 typedef enum {
 	bishop, rook
 } flags;
@@ -185,6 +185,8 @@ U64 mask_rook_attacks_on_the_fly(square sq, U64 block);
 
 
 U64 find_magic_number(square sq, int relevant_bits, flags f);
+extern U64 mask_atomic_explosion[64];
+extern U64 atomic_explosion_attacks[64][512];
 void init_magic_number();
 /* init_leaper_attacks()
    Rôle : pré-calcule/initialise les tables d’attaques des différentes pieces
@@ -215,8 +217,15 @@ static inline U64 get_queen_attacks(square sq, U64 occupancy)
 {
 	return get_bishop_attacks(sq,occupancy) | get_rook_attacks(sq,occupancy);
 }
+static inline U64 get_atomic_explosion_attacks(square sq, U64 occupancy)
+{
+    occupancy &= mask_atomic_explosion[sq];
+    occupancy = _pext_u64(occupancy, mask_atomic_explosion[sq]);
+    return atomic_explosion_attacks[sq][occupancy];
+}
 
-
+void init_atomic_explosion_mask();
+void init_atomic_explosion_attacks();
 /*
  * Pour savoir si une case est attaqué on par du principe que l'attaque est reciproque
  * Si une case est attaqué par un pion de color white alors un pion de couleur black posé
@@ -240,9 +249,9 @@ static inline int is_square_attacked(int  sq, side s, board_t *b_t)
 
     if (get_queen_attacks(sq, b_t->occupancies[both]) & ((s == white) ? b_t->board[Q] : b_t->board[q])) return 1;
     
-    if (king_attacks[sq] & ((s == white) ? b_t->board[K] : b_t->board[k])) return 1;
 
     return 0;
 }
+
 
 #endif

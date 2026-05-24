@@ -1,23 +1,8 @@
 #ifndef EVAL_H
 #define EVAL_H
-#include "move_atomic.h"
+#include "move.h"
+#include "bitboard.h"
 
-static inline void safety(board_t *b_t, board_t *s)
-{
-    memcpy(s->board, b_t->board, sizeof(s->board));
-    memcpy(s->occupancies, b_t->occupancies, sizeof(s->occupancies));
-    s->side = b_t->side;
-    s->enpassant = b_t->enpassant;
-    s->castle = b_t->castle;
-}
-static inline void restore(board_t *b_t, board_t *s)
-{
-    memcpy(b_t->board, s->board, sizeof(s->board));
-    memcpy(b_t->occupancies, s->occupancies, sizeof(s->occupancies));
-    b_t->side = s->side;
-    b_t->enpassant = s->enpassant;
-    b_t->castle = s->castle;
-}
 extern const int materiel_score[13];
 
 
@@ -65,16 +50,16 @@ static inline int score_move(int move, board_t *b_t)
                 break;
             target_piece++;
         }
-        safety(b_t, &backup);
-        if ( make_atomic_move(b_t,move,all_moves) != 0)
+        copy_board(b_t, &backup);
+        if ( make_move(b_t,move,all_moves) != 0)
         {
             if (b_t->board[(b_t->side == white)? K:k ] == 0ULL)
             {
-                restore(b_t,&backup);
+                restore_board(b_t,&backup);
                 return mvv_lva[piece][target_piece] + 5000;
             }
         }
-        restore(b_t, &backup);
+        restore_board(b_t, &backup);
         return mvv_lva[piece][target_piece] + 1000; 
     }
     return 0; 
@@ -142,13 +127,13 @@ static inline int quiescence(int alpha , int beta, board_t *b_t, int *ply, long 
     board_t save;
 
     moves move_liste;
-    generate_atomic_moves(b_t, &move_liste);
+    generate_moves(b_t, &move_liste);
     sort_moves(&move_liste,b_t);
     for (int move_count = 0; move_count < move_liste.count; move_count++)
     {
-        safety(b_t,&save);
+        copy_board(b_t, &save);
         (*ply)++;
-        if (make_atomic_move(b_t,move_liste.moves[move_count],only_captures) == 0)
+        if (make_move(b_t,move_liste.moves[move_count],only_captures) == 0)
         {
             (*ply)--; 
             continue;
@@ -156,7 +141,7 @@ static inline int quiescence(int alpha , int beta, board_t *b_t, int *ply, long 
 
 
         int score = -quiescence(-beta, -alpha, b_t, ply, nodes); 
-        restore(b_t,&save);
+        restore_board(b_t,&save);
         (*ply)--;
         if(score >= beta) return beta; 
         if (score > alpha) 
@@ -178,7 +163,7 @@ static inline int negamax(int  alpha,  int beta, int depth, board_t *b_t, int *p
 
     int in_check = 0; 
     if ((b_t->side == white)? b_t->board[K] : b_t->board[k])
-        in_check =  is_square_atomically_attacked((b_t->side == white)? get_ls1b_index(b_t->board[K]) : get_ls1b_index(b_t->board[k]), b_t->side ^ 1 , b_t);
+        in_check = is_square_attacked((b_t->side == white)? get_ls1b_index(b_t->board[K]) : get_ls1b_index(b_t->board[k]), b_t->side ^ 1 , b_t);
 
     if(in_check) depth++;
 
@@ -192,17 +177,17 @@ static inline int negamax(int  alpha,  int beta, int depth, board_t *b_t, int *p
 
     
     moves move_liste;
-    generate_atomic_moves(b_t, &move_liste);
+    generate_moves(b_t, &move_liste);
     sort_moves(&move_liste,b_t);
     board_t save; 
     
     
     for (int move_count = 0; move_count < move_liste.count; move_count++)
     {
-        safety(b_t,&save);
+        copy_board(b_t, &save);
         
         (*ply)++;
-        if (make_atomic_move(b_t,move_liste.moves[move_count],all_moves) == 0)
+        if (make_move(b_t,move_liste.moves[move_count],all_moves) == 0)
         {
             (*ply)--; 
             continue;
@@ -211,7 +196,7 @@ static inline int negamax(int  alpha,  int beta, int depth, board_t *b_t, int *p
 
 
         int score = -negamax(-beta, -alpha, depth -1 , b_t, ply, best_move, nodes); 
-        restore(b_t,&save);
+        restore_board(b_t,&save);
         (*ply)--;
         if(score >= beta)
         {

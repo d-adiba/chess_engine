@@ -2,49 +2,29 @@
 #define BITBOARD
 
 
-
-
 #include <stdio.h>
 #include <string.h>
+
+
 #define U64 unsigned long long
 #define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
+#define get_ls1b_index(bitboard) (__builtin_ctzll(bitboard))
+#define count_bits(bitboard) (__builtin_popcountll(bitboard))
 
-typedef enum {
-    a8, b8, c8, d8, e8, f8, g8, h8,
-    a7, b7, c7, d7, e7, f7, g7, h7,
-    a6, b6, c6, d6, e6, f6, g6, h6,
-    a5, b5, c5, d5, e5, f5, g5, h5,
-    a4, b4, c4, d4, e4, f4, g4, h4,
-    a3, b3, c3, d3, e3, f3, g3, h3,
-    a2, b2, c2, d2, e2, f2, g2, h2,
-    a1, b1, c1, d1, e1, f1, g1, h1, no_sq
-} square;
+
+typedef struct {
+	U64 board[12];  
+	U64 occupancies[3];
+	int side; 
+	int enpassant;
+	int castle; 
+} board_t; 
+
 
 extern const char squares[64][3];
-
-typedef enum {
-    white, black, both
-} side;
-typedef enum { P, N, B, R, Q, K, p, n, b, r, q, k } pieces;
-
-static const char ascii_pieces[13] = "PNBRQKpnbrqk";
-
 extern const char  *unicode_pieces[12];
-static const int char_pieces[] = {
-    ['P'] = P,
-    ['N'] = N,
-    ['B'] = B,
-    ['R'] = R,
-    ['Q'] = Q,
-    ['K'] = K,
-    ['p'] = p,
-    ['n'] = n,
-    ['b'] = b,
-    ['r'] = r,
-    ['q'] = q,
-    ['k'] = k
-};
+
 
 /*
 
@@ -64,83 +44,73 @@ static const int char_pieces[] = {
 */
 
 enum { wk = 1, wq = 2, bk = 4, bq = 8 };
+typedef enum {
+    a8, b8, c8, d8, e8, f8, g8, h8,
+    a7, b7, c7, d7, e7, f7, g7, h7,
+    a6, b6, c6, d6, e6, f6, g6, h6,
+    a5, b5, c5, d5, e5, f5, g5, h5,
+    a4, b4, c4, d4, e4, f4, g4, h4,
+    a3, b3, c3, d3, e3, f3, g3, h3,
+    a2, b2, c2, d2, e2, f2, g2, h2,
+    a1, b1, c1, d1, e1, f1, g1, h1, no_sq
+} square;
+
+typedef enum {
+    white, black, both
+} side;
+
+
+typedef enum { P, N, B, R, Q, K, p, n, b, r, q, k } pieces;
 
 
 
 
+static const char ascii_pieces[13] = "PNBRQKpnbrqk";
+static const int char_pieces[] = {
+    ['P'] = P,
+    ['N'] = N,
+    ['B'] = B,
+    ['R'] = R,
+    ['Q'] = Q,
+    ['K'] = K,
+    ['p'] = p,
+    ['n'] = n,
+    ['b'] = b,
+    ['r'] = r,
+    ['q'] = q,
+    ['k'] = k
+};
 
-typedef struct {
-	U64 board[12];  
-	U64 occupancies[3];
-	int side; 
-	int enpassant;
-	int castle; 
-} board_t; 
 
-
-#define copy_board(b_t)                                             \
-    U64 bitboards_copy[12], occupancies_copy[3];                          \
-    int side_copy, enpassant_copy, castle_copy;                           \
-    memcpy(bitboards_copy, b_t->board, 96);                                \
-    memcpy(occupancies_copy, b_t->occupancies, 24);                            \
-    side_copy = b_t->side, enpassant_copy = b_t->enpassant, castle_copy = b_t->castle;   \
-                                           \
-
-#define restore_board(b_t)                                                       \
-    memcpy(b_t->board, bitboards_copy, 96);                                \
-    memcpy(b_t->occupancies, occupancies_copy, 24);                            \
-    b_t->side = side_copy, b_t->enpassant = enpassant_copy, b_t->castle = castle_copy;   \
-
-/* get_bit(bitboard, sq)
-   Rôle : retourne l’état (0/1) du bit correspondant à la case sq dans bitboard.
-
-   Paramètres :
-   - bitboard : bitboard source (U64), non modifié.
-   - sq       : index du bit/case à tester.
-
-   Retour :
-   - 1 si le bit sq est à 1, sinon 0.
-
-   Préconditions :
-   - sq doit être dans [0, 63] (sinon le décalage >> peut être un comportement indéfini en C). */
+static inline void copy_board(board_t *b_t, board_t *s)
+{
+    memcpy(s->board, b_t->board, sizeof(s->board));
+    memcpy(s->occupancies, b_t->occupancies, sizeof(s->occupancies));
+    s->side = b_t->side;
+    s->enpassant = b_t->enpassant;
+    s->castle = b_t->castle;
+}
+static inline void restore_board(board_t *b_t, board_t *s)
+{
+    memcpy(b_t->board, s->board, sizeof(s->board));
+    memcpy(b_t->occupancies, s->occupancies, sizeof(s->occupancies));
+    b_t->side = s->side;
+    b_t->enpassant = s->enpassant;
+    b_t->castle = s->castle;
+}
 
 static inline int get_bit(U64 bitboard, square sq)
 {
     return (((bitboard) >> sq) & 1ULL);
 }
 
-/* set_bit(bitboard, sq)
-   Rôle : met à 1 le bit correspondant à la case sq dans *bitboard.
 
-   Paramètres :
-   - bitboard : pointeur vers le bitboard à modifier.
-   - sq       : index du bit/case à mettre à 1.
-
-   Effet :
-   - Après appel, le bit sq de *bitboard vaut 1.
-
-   Préconditions :
-   - bitboard != NULL.
-   - sq doit être dans [0, 63] (sinon le décalage << peut être un comportement indéfini en C). */
 static inline void set_bit(U64 *bitboard, square sq)
 {
     *bitboard |= (1ULL << sq);
 }
 
-/* pop_bit(bitboard, sq)
-   Rôle : enlève (met à 0) le bit correspondant à la case sq dans *bitboard, si ce bit est présent.
 
-   Paramètres :
-   - bitboard : pointeur vers le bitboard à modifier.
-   - sq       : index du bit/case à retirer.
-
-   Retour :
-   - 1 si le bit était à 1 et a été retiré.
-   - 0 si le bit était déjà à 0 (bitboard inchangé).
-
-   Préconditions :
-   - bitboard != NULL.
-   - sq doit être dans [0, 63]. */
 static inline int pop_bit(U64 *bitboard, square sq)
 {
     U64 mask = (1ULL << sq);
@@ -151,47 +121,14 @@ static inline int pop_bit(U64 *bitboard, square sq)
     return 0;
 }
 
-/* print_bitboard(bitboard)
-   Rôle : affiche le bitboard sous forme d’échiquier 8x8 (0/1) sur la sortie standard,
-          avec les coordonnées (8..1 et a..h) et la valeur entière du bitboard.
 
-   Paramètre :
-   - bitboard : bitboard à afficher (U64), non modifié.
-
-   Effet :
-   - Écrit sur stdout via printf(). */
 void print_bitboard(U64 bitborad);
 
 static inline const char *get_square(square sq)
 {
 	return squares[sq];
 }
-/*
- *Compter le nombre de bit dans un bitboard
- * */
-#define count_bits(bitboard) (__builtin_popcountll(bitboard))
-/*static inline  int count_bits( U64 bitboard)
-{
-	int count = 0; 
-	while (bitboard)
-	{
-		count++;
-		// réinitialise le bit le moins significatif  du bitboard 
-		bitboard &= bitboard - 1; 	
-	}
-	return count;
-}*/
-/*
- *renvoie l'index du 1er bit le moins significatif 
- * */
 
-#define get_ls1b_index(bitboard) (__builtin_ctzll(bitboard))
-/*static inline int get_ls1b_index(U64 bitboard)
-{
-    	if(bitboard)
-		return count_bits( (bitboard & -bitboard) -1);
-	return -1;
-}*/
 void print_board(board_t *b);
 void parse_fen(char *fen, board_t *b);
 void print_attacked_squares(side s, board_t *b);

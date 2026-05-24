@@ -3,6 +3,7 @@
 
 #include "bitboard.h"
 #include "attacks.h"
+#include <immintrin.h>
 
 
 /*
@@ -59,26 +60,20 @@ static const int castling_rights[64] = {
     15, 15, 15, 15, 15, 15, 15, 15,
     13, 15, 15, 15, 12, 15, 15, 14
 };
-#define get_move_source(move) (move & 0x3f)
 
+#define get_move_source(move) (move & 0x3f)
 
 #define get_move_target(move) ((move & 0xfc0) >> 6)
 
-
 #define get_move_piece(move) ((move & 0xf000) >> 12)
-
 
 #define get_move_promoted(move) ((move & 0xf0000) >> 16)
 
-
 #define get_move_capture(move) (move & 0x100000)
-
 
 #define get_move_double(move) (move & 0x200000)
 
-
 #define get_move_enpassant(move) (move & 0x400000)
-
 
 #define get_move_castling(move) (move & 0x800000)
 
@@ -87,15 +82,20 @@ typedef struct  {
     int moves[256];
     int count;
 } moves;
-
 enum { all_moves, only_captures};
 
+static inline void add_move(moves *move_list, int move)
+{
+    move_list->moves[move_list->count] = move;
+    move_list->count++;
+}
 static inline int  make_move(board_t *b_t, int move, int move_flag)
 {
     
     if (move_flag == all_moves)
     {
-        copy_board(b_t);
+        board_t temp_board;
+        copy_board(b_t, &temp_board);
         int source_square = get_move_source(move);
         int target_square = get_move_target(move);
         int piece = get_move_piece(move);
@@ -104,12 +104,14 @@ static inline int  make_move(board_t *b_t, int move, int move_flag)
         int double_push = get_move_double(move);
         int enpassant = get_move_enpassant(move);
         int castling = get_move_castling(move);
+       
 
         pop_bit((b_t->board) + piece, source_square);
         set_bit((b_t->board) + piece, target_square);      
         
         if (capture)
         {
+           
             int start, end; 
             if (b_t->side == white)
             {
@@ -129,7 +131,44 @@ static inline int  make_move(board_t *b_t, int move, int move_flag)
                     break;
                 }
             }
+            U64 mask = get_atomic_explosion_attacks(target_square, b_t->occupancies[both]);
+            for (int i = P; i <= k; i++)
+            {
+                if (i== P || i == p)
+                continue ;
+                b_t->board[i] &= ~mask;
+            }
+            if (b_t->side == white)
+            {
+                if (!(b_t->board[k]) || !(b_t->board[r]))
+                {
+                    b_t->castle  &= castling_rights[e8];
+                }
+                else if (!get_bit(b_t->board[r], h8))
+                {
+                   b_t->castle  &= castling_rights[h8];
+                }
+                else if  (!get_bit(b_t->board[r], a8))
+                {
+                   b_t->castle  &= castling_rights[a8];
+                }
+            }
+            else
+            {
+                if (!(b_t->board[K]) || !(b_t->board[R]))
+                {
+                    b_t->castle  &= castling_rights[e1];
+                }
+                else if (!get_bit(b_t->board[R], h1))
+                {
+                   b_t->castle  &= castling_rights[h1];
+                }
+                else if  (!get_bit(b_t->board[R], a1))
+                {
+                   b_t->castle  &= castling_rights[a1];
+                }
 
+            }
         }
         if (promoted_piece)
         {
@@ -191,11 +230,33 @@ static inline int  make_move(board_t *b_t, int move, int move_flag)
             b_t->occupancies[black] |= b_t->board[i];
         }
         b_t->occupancies[both] = b_t->occupancies[white] | b_t->occupancies[black];
-
-        if (is_square_attacked((b_t->side == white) ? get_ls1b_index(b_t->board[k]) : get_ls1b_index(b_t->board[K]), b_t->side, b_t))
+        if (!((b_t->side == white) ? b_t->board[k] : b_t->board[K]))
         {
-            restore_board(b_t);
+            restore_board(b_t, &temp_board);
             return 0;
+        }
+        else if (is_square_attacked((b_t->side == white) ? get_ls1b_index(b_t->board[k]) : get_ls1b_index(b_t->board[K]), b_t->side, b_t))
+        {
+            // l'idéé ici est de surveillé les moves ou le roi est attaqué mais dont le roi adverse est dans la zone d'explosion ; ces
+            // moves deviennent ainsi legaux car ce derniers n'est plus attaquable
+            /*
+            *une fois avoir vérifié que le roi est sous attack on calcul le bitboard resultant de son explosion et de celui du roi adverse;
+            * si ce dernier n'est pas nulle alors le roi adverse sera detruit en cas d'attaque du roi courant donc le mouv devient valid 
+            *
+            */
+            
+            int piece = (b_t->side == white)? k : K;
+            int piece_inv = (b_t->side == white)? K : k;
+            if(!get_atomic_explosion_attacks(get_ls1b_index(b_t->board[piece]),b_t->board[piece_inv]))
+            {
+                restore_board(b_t, &temp_board);
+                return 0;
+            }
+            else 
+            {
+                return 1;
+            }
+           
         }
         else  
             return 1;
@@ -204,22 +265,12 @@ static inline int  make_move(board_t *b_t, int move, int move_flag)
     else
     {
         if (get_move_capture(move))
-        make_move(b_t, move, all_moves);
+            make_move(b_t, move, all_moves);
         else
             return 0;
     }
     return 0; 
 }
-
-
-static inline void add_move(moves *move_list, int move)
-{
-    move_list->moves[move_list->count] = move;
-    move_list->count++;
-}
-void print_move(int move);
-void print_move_list(moves *move_list);
-
 
 static inline void generate_moves(board_t *b_t, moves *move_list)
 {
@@ -537,6 +588,9 @@ static inline void generate_moves(board_t *b_t, moves *move_list)
    
 }
 
+
+void print_move(int move);
+void print_move_list(moves *move_list);
 void print_move_test(int move);
 void print_move_UCI(int move);
 #endif 

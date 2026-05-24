@@ -33,47 +33,21 @@ const int rook_relevant_bits[64] = {
 
 U64 pawn_attacks[2][64];
 U64 knight_attacks[64]; 
-U64 king_attacks[64];
 
+
+U64 king_attacks[64];
 U64 bishop_masks[64];
 U64 rook_masks[64];
+U64 mask_atomic_explosion[64];
 
+
+
+U64 atomic_explosion_attacks[64][512];
 U64 bishop_attacks[64][512];
 U64 rook_attacks[64][4096];
 U64 rook_magic_number[64];
 U64 bishop_magic_number[64]; 
-/**
- * @brief Calcule les positions d’attaque d’un pion à partir d’une case donnée.
- *
- * @context
- * - Utilisée lors du calcul / pré-calcul de la table d’attaque des pions.
- *
- * @inputs
- * - square : index de la case du pion, dans l’intervalle [0..63].
- * - color  : couleur du pion (ex. WHITE / BLACK).
- *
- * @outputs
- * - Retourne un U64 (bitboard) dont les bits à 1 représentent les cases attaquées
- *   par ce pion depuis la case square.
- * - Si la valeur retournée est 0, alors le pion n’a aucune case attaquable
- *
- * @errors / undefined behavior
- * - Comportement indéfini si square n’est pas dans [0..63] (décalage de bits invalide).
- *
- * @algorithm
- * 1) Principe (bitboards) :
- *    - Les attaques d’un pion sont obtenues via des décalages de 7 et 9 bits
- *      (selon la convention d’orientation du bitboard et la couleur).
- *    - Les deux bitboards (capture gauche / capture droite) sont combinés par OU.
- *
- * 2) Gestion des cas limites (débordements de colonnes) :
- *    - Sans masquage, un pion sur la colonne A ou H peut “wrap” sur l’autre côté
- *      lors du décalage (effet de débordement horizontal).
- *    - On masque donc les résultats avec :
- *      - not_a_file pour éliminer les attaques qui débordent depuis la colonne A,
- *      - not_h_file pour éliminer les attaques qui débordent depuis la colonne H.
- *
- */
+
 
 U64 mask_pawn_attacks(side sd, square sq)
 {
@@ -100,31 +74,7 @@ U64 mask_pawn_attacks(side sd, square sq)
     return attacks_result;
 }
 
-/**
- * @brief Calcule les positions d’attaque d’un cavalier  à partir d’une case donnée.
- *
- * @context
- * - Utilisée lors du calcul / pré-calcul de la table d’attaque des pieces.
- *
- * @inputs
- * - square : index de la case du cavalier, dans l’intervalle [0..63].
- *
- * @outputs
- * - Retourne un U64 (bitboard) dont les bits à 1 représentent les cases attaquées
- *   par ce cavalier depuis la case square.
- *
- * @errors / undefined behavior
- * - Comportement indéfini si square n’est pas dans [0..63] (décalage de bits invalide).
- *
- * @algorithm
- * 1) Principe (bitboards) :
- *    - Les attaques d’un cavalier  sont obtenues via des décalages (17, 15, 10, 6) de bit
- *    - Ces decalages sont effectuées dans les deux sens à partir de la position de depart
- *
- * 2) Gestion des cas limites (débordements de colonnes) :
- *    - les debordement occasionnels (cas h4 par exemple) sont gérés comme avec les pions
- *
- */
+
 
 U64 mask_knight_attacks(square sq)
 {
@@ -164,42 +114,6 @@ U64 mask_king_attacks(square sq)
     return attacks_result; 
 }
 
-/**
- * @brief Calcule les positions d’attaque d’un fou  à partir d’une case donnée.
- *
- * @context
- * - Utilisée lors du calcul / pré-calcul de la table d’attaque des fou 
- *
- * @inputs
- * - square : index de la case du pion, dans l’intervalle 0..63].
- *
- * @outputs
- * - Retourne un U64 (bitboard) dont les bits à 1 représentent les cases attaquées
- *   par ce fou  depuis la case square.
- * - Si la valeur retournée est 0, alors le pion n’a aucune case attaquable
- *
- * @errors / undefined behavior
- * - Comportement indéfini si square n’est pas dans [0..63] (décalage des bits invalide).
- *
- * @algorithm
- * 1) Principe (bitboards) :
- *    - Les attaques d’un  fou  sont obtenues via  les calcul de rangée et de colonne
- *      la rangée ou se trouve ce dernier est déterminé via le quotien de la division
- *      de sa postion par 8 et sa colonne par le reste de cette division entière 
- *    - Les positions d'attaques sont obtenues en decalant cette rangée 
- *    	soit vers le haut ou le bas et en décalant la colonne soit vers la droite      
- *    	ou la gauche et en repetant le processus à partir de la dernier positon utilisée
- *
- * 2) illustartion :
- *
- *
- * 			c5	e5 <- f6 <- g7 <- succcession de case deduide de e5 
- *
- * 			    d4 <- case de depart du fou 
- *
- *			c3	e3 <- case obtenue a partir d'un décalage colonne/range
- *
- */
 
 
 U64 mask_bishop_attacks(square sq)
@@ -344,24 +258,7 @@ void init_leaper_attacks()
 }
 
 
-/*
- *index:représente un encodage des bits du mask d'attaque qui sont occupés 
- *	sa valeur binaire indique les bit succesif de poids faible qui 
- *	deja occupé sur le mask
- *	eg:	10011= 19
- *		ici si le mask dispose de 12 bits non nuls représentant
- *		les positions de déplacements alors si ont les classe 
- *		de 0 à 11 on a :10011
- *				43210 <-les position des differents bit
- *					composant 13
- *				alors les bits de poids faible en position
- *				successif 0,1, et 4 sont occupés
- *	ici : index & (1 << i) vérifie si le bit en position i dans index 
- *	est à 1 
- *	eg:  10011 & ( 1 << 0) = 10011 & 1 = 1 soit le premier bit faible
- *	est obstrué   
- *					
- * */
+
 U64 set_occupancy( int index , int bits_in_mask, U64 mask_attacks)
 {
 	U64 occupancy = 0ULL;
@@ -416,6 +313,42 @@ U64 find_magic_number(square sq, int relevant_bits, flags f)
 	return 0ULL; 	
 }
 
+void init_atomic_explosion_mask()
+{
+    for (int sq = 0; sq < 64; sq++)
+    {
+        U64 mask = 0ULL;
+        set_bit(&mask, sq);
+        if (sq + 8 <= h1) set_bit(&mask, sq + 8);
+        if (sq - 8 >= a8) set_bit(&mask, sq - 8);
+        if ((sq + 1) % 8 != 0) 
+        {
+            set_bit(&mask, sq + 1);
+            if (sq + 9 <= h1) set_bit(&mask, sq + 9);
+            if (sq - 7 >= a8) set_bit(&mask, sq - 7);
+        }
+        if (sq % 8 != 0)    
+        {
+            set_bit(&mask, sq - 1);
+            if (sq + 7 <= h1) set_bit(&mask, sq + 7);
+            if (sq - 9 >= a8) set_bit(&mask, sq - 9);
+        }
+        mask_atomic_explosion[sq] = mask;
+    }
+}
+
+void init_atomic_explosion_attacks()
+{
+	init_atomic_explosion_mask();
+    for (int sq = 0; sq < 64; sq++)
+    {
+        for (int index = 0; index < 512; index++)
+        {
+            atomic_explosion_attacks[sq][index] =  _pdep_u64(index, mask_atomic_explosion[sq]);
+        }
+    }
+}
+
 void init_magic_number()
 {
 	for ( int i = 0; i < 64; i++)
@@ -431,6 +364,7 @@ void init_all()
 {
 	init_leaper_attacks(); 
 	init_magic_number();
+	init_atomic_explosion_attacks();
 	init_slider_attacks(bishop);
 	init_slider_attacks(rook);
 }

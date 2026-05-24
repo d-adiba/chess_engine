@@ -1,13 +1,11 @@
 #ifndef TEST_H
 #define TEST_H
-#include "bitboard.h"
 #include "move.h"
-#include "atomic/move_atomic.h"
 
 
-
-static inline void perft_driver(int depth, board_t *b_t, long long  *nodes)
+static inline void perft_atomic_driver(int depth, board_t *b_t, long long  *nodes)
 {
+    board_t backup;
     
     if (depth == 0)
     {
@@ -19,18 +17,19 @@ static inline void perft_driver(int depth, board_t *b_t, long long  *nodes)
 
     for (int move_count = 0; move_count < move_list.count; move_count++)
     {   
-        copy_board(b_t);
+        copy_board(b_t, &backup);
         if (!make_move(b_t,move_list.moves[move_count], all_moves))
         {
             continue;
         }
-        perft_driver(depth - 1, b_t, nodes);
-        restore_board(b_t);
+        perft_atomic_driver(depth - 1, b_t, nodes);
+        restore_board(b_t, &backup);
     }
 }
 
-static inline void perft_test(int depth, board_t *b_t)
+static inline void perft_atomic_test(int depth, board_t *b_t)
 {
+    board_t backup;
     long long  nodes = 0;
     long start = 0;
     long end = 0;
@@ -45,13 +44,13 @@ static inline void perft_test(int depth, board_t *b_t)
 
     for (int move_count = 0; move_count < move_list.count; move_count++)
     {   
-        copy_board(b_t);
+        copy_board(b_t, &backup);
         if (!make_move(b_t,move_list.moves[move_count], all_moves))
         {
             continue;
         }
-        perft_driver(depth - 1, b_t, &node);
-        restore_board(b_t);
+        perft_atomic_driver(depth - 1, b_t, &node);
+        restore_board(b_t, &backup);
         print_move_test(move_list.moves[move_count]);
         printf(": %lld\n", node);
         nodes += node;
@@ -61,5 +60,8 @@ static inline void perft_test(int depth, board_t *b_t)
     printf("\nDepth:\t%d\nNodes:\t%lld\n", depth, nodes);
     printf("Time:\t%ldms\n", end - start);
 }
+
+
+
 
 #endif

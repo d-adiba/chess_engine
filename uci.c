@@ -1,7 +1,6 @@
 
 #include "uci.h"
-#include "atomic/eval.h"
-#include "atomic/test_atomic.h"
+
 
 int parse_move(char *move_str, board_t *b_t)
 {
@@ -64,7 +63,7 @@ void parse_position(char *command, board_t *b_t)
             if (move == 0)
                 break;
             
-            make_atomic_move(b_t, move, all_moves);
+            make_move(b_t, move, all_moves);
             
             while (*current_char && *current_char != ' ') current_char++;
             
@@ -158,7 +157,7 @@ void uci_loop(board_t *b_t)
         }
         if(strncmp(input, "mm", 2) == 0)
         {
-            make_atomic_move(b_t,parse_move(input + 3, b_t),all_moves);
+            make_move(b_t,parse_move(input + 3, b_t),all_moves);
             print_board(b_t);
             printf("\n");
         }

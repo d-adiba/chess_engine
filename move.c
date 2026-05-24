@@ -1,6 +1,9 @@
 #include "move.h"
 #include "attacks.h"
 #include "bitboard.h"
+
+
+
 const int  promoted_pieces[]= {
     [Q] ='q',
     [R] ='r',
@@ -10,7 +13,7 @@ const int  promoted_pieces[]= {
     [b] = 'b',
     [n] = 'n',
     [q] = 'q',
-}; 
+};
 
 void print_move_test(int move)
 {
