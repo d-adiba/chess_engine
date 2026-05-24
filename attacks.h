@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <immintrin.h>
+
+
 typedef enum {
 	bishop, rook
 } flags;
@@ -87,40 +89,59 @@ extern U64 knight_attacks[64];
 extern U64 king_attacks[64];
 
 extern U64 bishop_attacks[64][512];
+
 extern U64 rook_attacks[64][4096]; 
 
 extern U64 bishop_masks[64];
+
 extern U64 rook_masks[64];
 
-/*
- * Tableau recapitulant  le nombre de deplacment selon 
- * le masque d'attaque par case pour un bihop 
-	6, 5, 5, 5, 5, 5, 5, 6,
-	5, 5, 5, 5, 5, 5, 5, 5,
-	5, 5, 7, 7, 7, 7, 5, 5,
-	5, 5, 7, 9, 9, 7, 5, 5,
-	5, 5, 7, 9, 9, 7, 5, 5,
-	5, 5, 7, 7, 7, 7, 5, 5,
-	5, 5, 5, 5, 5, 5, 5, 5,
-	6, 5, 5, 5, 5, 5, 5, 6 
-*/
+extern U64 mask_atomic_explosion[64];
 
-extern const int bishop_relevant_bits[64];
- /*
- * Tableau recapitulant  le nombre de deplacment selon 
- * le masque d'attaque par case pour un rook 
- 12, 11, 11, 11, 11, 11, 11, 12,
- 11, 10, 10, 10, 10, 10, 10, 11,
- 11, 10, 10, 10, 10, 10, 10, 11,
- 11, 10, 10, 10, 10, 10, 10, 11,
- 11, 10, 10, 10, 10, 10, 10, 11,
- 11, 10, 10, 10, 10, 10, 10, 11,
- 11, 10, 10, 10, 10, 10, 10, 11,
- 12, 11, 11, 11, 11, 11, 11, 12
-*/
-extern const int rook_relevant_bits[64];
-extern U64 rook_magic_number[64];
-extern U64 bishop_magic_number[64];
+extern U64 atomic_explosion_attacks[64][512];
+
+static inline U64 get_bishop_attacks(square sq, U64 occupancy)
+{
+	occupancy = _pext_u64(occupancy, bishop_masks[sq]);
+	return bishop_attacks[sq][occupancy]; 
+}
+
+static inline U64 get_rook_attacks(square sq, U64 occupancy) 
+{
+	occupancy &= rook_masks[sq];
+	occupancy = _pext_u64(occupancy, rook_masks[sq]);
+	return rook_attacks[sq][occupancy]; 
+}
+
+static inline U64 get_queen_attacks(square sq, U64 occupancy)
+{
+	return get_bishop_attacks(sq,occupancy) | get_rook_attacks(sq,occupancy);
+}
+
+static inline U64 get_atomic_explosion_attacks(square sq, U64 occupancy)
+{
+    occupancy &= mask_atomic_explosion[sq];
+    occupancy = _pext_u64(occupancy, mask_atomic_explosion[sq]);
+    return atomic_explosion_attacks[sq][occupancy];
+}
+
+static inline int is_square_attacked(int  sq, side s, board_t *b_t)
+{
+    if ((s == white) && (pawn_attacks[black][sq] & b_t->board[P])) return 1;
+    
+    if ((s == black) && (pawn_attacks[white][sq] & b_t->board[p])) return 1;
+    if (knight_attacks[sq] & ((s == white) ? b_t->board[N] : b_t->board[n])) return 1;
+    
+    if (get_bishop_attacks(sq, b_t->occupancies[both]) & ((s == white) ? b_t->board[B] : b_t->board[b])) return 1;
+
+    if (get_rook_attacks(sq, b_t->occupancies[both]) & ((s == white) ? b_t->board[R] : b_t->board[r])) return 1;    
+
+    if (get_queen_attacks(sq, b_t->occupancies[both]) & ((s == white) ? b_t->board[Q] : b_t->board[q])) return 1;
+    
+
+    return 0;
+}
+
 /* mask_pawn_attacks(sd, sq)
    Rôle : calcule et renvoie le bitboard des cases attaquées par un pion placé sur sq,
           pour le camp/côté sd (ex: WHITE/BLACK).
@@ -183,75 +204,13 @@ U64 mask_rook_attacks(square sq);
 
 U64 mask_rook_attacks_on_the_fly(square sq, U64 block);
 
-
-U64 find_magic_number(square sq, int relevant_bits, flags f);
-extern U64 mask_atomic_explosion[64];
-extern U64 atomic_explosion_attacks[64][512];
-void init_magic_number();
-/* init_leaper_attacks()
-   Rôle : pré-calcule/initialise les tables d’attaques des différentes pieces
-          utilisées par le moteur pour obtenir rapidement les attaques depuis n’importe quelle case.
-
-   Effet :
-   - Remplit les tableaux globaux (ex: pawn_attacks, knight_attacks ... etc) avec les masques calculés.*/
-void init_leaper_attacks(void);
-void init_all();
-
-void init_slider_attacks(flags fg);
-static inline U64 get_bishop_attacks(square sq, U64 occupancy)
-{
-	occupancy &= bishop_masks[sq]; 
-	occupancy *= bishop_magic_number[sq]; 
-	occupancy >>= ( 64 - bishop_relevant_bits[sq]);
-	return bishop_attacks[sq][occupancy]; 
-}
-
-static inline U64 get_rook_attacks(square sq, U64 occupancy) 
-{
-	occupancy &= rook_masks[sq]; 
-	occupancy *= rook_magic_number[sq]; 
-	occupancy >>= ( 64 - rook_relevant_bits[sq]);
-	return rook_attacks[sq][occupancy]; 
-}
-static inline U64 get_queen_attacks(square sq, U64 occupancy)
-{
-	return get_bishop_attacks(sq,occupancy) | get_rook_attacks(sq,occupancy);
-}
-static inline U64 get_atomic_explosion_attacks(square sq, U64 occupancy)
-{
-    occupancy &= mask_atomic_explosion[sq];
-    occupancy = _pext_u64(occupancy, mask_atomic_explosion[sq]);
-    return atomic_explosion_attacks[sq][occupancy];
-}
-
+void init_mask_slider_attacks();
 void init_atomic_explosion_mask();
 void init_atomic_explosion_attacks();
-/*
- * Pour savoir si une case est attaqué on par du principe que l'attaque est reciproque
- * Si une case est attaqué par un pion de color white alors un pion de couleur black posé
- * a cette position attaque le pion à la case testé
- * de ce principe  il suffit de regardé les case attaqué par un pion de couleur opposé
- * et le couplé avec les cases presente sur l'échéquier 
- *
- * le principe est le meme pour les autre type de piece saut que le pattern d'attaque est
- * le meme peu importe la couleur 
- * */ 
-static inline int is_square_attacked(int  sq, side s, board_t *b_t)
-{
-    if ((s == white) && (pawn_attacks[black][sq] & b_t->board[P])) return 1;
-    
-    if ((s == black) && (pawn_attacks[white][sq] & b_t->board[p])) return 1;
-    if (knight_attacks[sq] & ((s == white) ? b_t->board[N] : b_t->board[n])) return 1;
-    
-    if (get_bishop_attacks(sq, b_t->occupancies[both]) & ((s == white) ? b_t->board[B] : b_t->board[b])) return 1;
+void init_leaper_attacks(void);
+void init_slider_attacks(flags fg);
+void init_all();
 
-    if (get_rook_attacks(sq, b_t->occupancies[both]) & ((s == white) ? b_t->board[R] : b_t->board[r])) return 1;    
-
-    if (get_queen_attacks(sq, b_t->occupancies[both]) & ((s == white) ? b_t->board[Q] : b_t->board[q])) return 1;
-    
-
-    return 0;
-}
 
 
 #endif

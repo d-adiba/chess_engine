@@ -89,6 +89,7 @@ static inline void add_move(moves *move_list, int move)
     move_list->moves[move_list->count] = move;
     move_list->count++;
 }
+
 static inline int  make_move(board_t *b_t, int move, int move_flag)
 {
     
