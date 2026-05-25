@@ -227,12 +227,12 @@ U64 mask_rook_attacks_on_the_fly(square sq, U64 block)
 void init_leaper_attacks()
 {
     int sq;
-    for (sq = 0; sq < 64; sq++) {
-
-	pawn_attacks[white][sq] = mask_pawn_attacks(white, sq);
-	pawn_attacks[black][sq] = mask_pawn_attacks(black, sq);
-	knight_attacks[sq] = mask_knight_attacks(sq);
-	king_attacks[sq] = mask_king_attacks(sq);
+    for (sq = 0; sq < 64; sq++) 
+    {
+        pawn_attacks[white][sq] = mask_pawn_attacks(white, sq);
+	    pawn_attacks[black][sq] = mask_pawn_attacks(black, sq);
+	    knight_attacks[sq] = mask_knight_attacks(sq);
+	    king_attacks[sq] = mask_king_attacks(sq);
     }
 }
 
